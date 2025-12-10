@@ -15,33 +15,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for premium look
+# Custom CSS for better styling
 st.markdown("""
 <style>
-    /* Main container */
-    .main {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    }
-    
-    /* Chat messages */
-    .stChatMessage {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
-        padding: 12px;
-        margin: 8px 0;
-    }
-    
-    /* Metrics cards */
+    /* Metrics cards styling */
     [data-testid="metric-container"] {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        border: 1px solid rgba(102, 126, 234, 0.3);
         border-radius: 12px;
         padding: 16px;
-    }
-    
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
     }
     
     /* Buttons */
@@ -60,38 +42,26 @@ st.markdown("""
         box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     }
     
-    /* Input fields */
-    .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        color: white;
-    }
-    
-    /* Expander */
-    .streamlit-expanderHeader {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
-    }
-    
-    /* Divider */
-    hr {
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-    
     /* Tab styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
     }
     
     .stTabs [data-baseweb="tab"] {
-        background: rgba(255, 255, 255, 0.05);
         border-radius: 8px;
         padding: 10px 20px;
     }
     
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Expander styling */
+    .streamlit-expanderHeader {
+        border-radius: 8px;
+    }
+    
+    /* Chat message styling */
+    .stChatMessage {
+        border-radius: 12px;
+        padding: 12px;
+        margin: 8px 0;
     }
 </style>
 """, unsafe_allow_html=True)
