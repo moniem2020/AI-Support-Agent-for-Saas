@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.config import KNOWLEDGE_BASE_DIR, INDEXES_DIR
-from src.rag.chunker import document_chunker
+from src.rag.chunker import chunker
 from src.rag.dense_retriever import DenseRetriever
 from src.rag.sparse_retriever import SparseRetriever
 
@@ -45,12 +45,18 @@ def chunk_documents(documents: list) -> list:
     all_chunks = []
     
     for doc in documents:
-        chunks = document_chunker.chunk_text(
-            doc["content"],
-            doc["metadata"]
+        chunk_objs = chunker.chunk_document(
+            content=doc["content"],
+            doc_id=doc["metadata"]["doc_id"],
+            metadata=doc["metadata"]
         )
-        all_chunks.extend(chunks)
-        print(f"  📦 {doc['metadata']['doc_id']}: {len(chunks)} chunks")
+        # Convert Chunk objects to dicts
+        for chunk_obj in chunk_objs:
+            all_chunks.append({
+                "content": chunk_obj.content,
+                "metadata": chunk_obj.metadata
+            })
+        print(f"  📦 {doc['metadata']['doc_id']}: {len(chunk_objs)} chunks")
     
     return all_chunks
 
