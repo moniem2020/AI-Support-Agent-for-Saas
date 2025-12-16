@@ -4,7 +4,7 @@ Uses retrieved context and Gemini for response generation.
 """
 from typing import List, Dict, Any
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 from src.config import GOOGLE_API_KEY, MODEL_TIERS
 from src.agents.state import AgentState, Message

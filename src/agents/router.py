@@ -4,7 +4,7 @@ Determines complexity, category, urgency, and sentiment.
 """
 from typing import Dict, Any
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 import json
 import re
 
