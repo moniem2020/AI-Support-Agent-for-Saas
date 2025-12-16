@@ -210,5 +210,30 @@ class SemanticCache:
         }
 
 
-# Singleton instance
-semantic_cache = SemanticCache()
+# Lazy initialization to avoid slow model loading on import
+_semantic_cache_instance: Optional[SemanticCache] = None
+
+
+def get_semantic_cache() -> SemanticCache:
+    """
+    Get or create the semantic cache singleton.
+    Uses lazy initialization to avoid loading embedding model on import.
+    """
+    global _semantic_cache_instance
+    if _semantic_cache_instance is None:
+        _semantic_cache_instance = SemanticCache()
+    return _semantic_cache_instance
+
+
+# Backwards compatibility: access the instance via property
+class _SemanticCacheSingleton:
+    """Proxy to provide backward-compatible attribute access."""
+    
+    def __getattr__(self, name):
+        return getattr(get_semantic_cache(), name)
+    
+    def __call__(self):
+        return get_semantic_cache()
+
+
+semantic_cache = _SemanticCacheSingleton()

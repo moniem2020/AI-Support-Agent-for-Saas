@@ -299,5 +299,30 @@ class SupportAgentGraph:
         return self.process(query, user_id, ticket_id)
 
 
-# Singleton instance
-support_agent = SupportAgentGraph()
+# Lazy initialization to avoid slow startup
+_support_agent_instance: Optional['SupportAgentGraph'] = None
+
+
+def get_support_agent() -> 'SupportAgentGraph':
+    """
+    Get or create the support agent graph singleton.
+    Uses lazy initialization to avoid slow model loading on import.
+    """
+    global _support_agent_instance
+    if _support_agent_instance is None:
+        _support_agent_instance = SupportAgentGraph()
+    return _support_agent_instance
+
+
+# Backwards compatibility
+class _SupportAgentProxy:
+    """Proxy to provide backward-compatible attribute access."""
+    
+    def __getattr__(self, name):
+        return getattr(get_support_agent(), name)
+    
+    def __call__(self):
+        return get_support_agent()
+
+
+support_agent = _SupportAgentProxy()
