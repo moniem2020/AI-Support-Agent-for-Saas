@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.config import KNOWLEDGE_BASE_DIR, INDEXES_DIR
 from src.rag.chunker import chunker
+from src.rag.chunker import chunker
 from src.rag.dense_retriever import DenseRetriever
 from src.rag.sparse_retriever import SparseRetriever
 
@@ -50,12 +51,7 @@ def chunk_documents(documents: list) -> list:
             doc_id=doc["metadata"]["doc_id"],
             metadata=doc["metadata"]
         )
-        # Convert Chunk objects to dicts
-        for chunk_obj in chunk_objs:
-            all_chunks.append({
-                "content": chunk_obj.content,
-                "metadata": chunk_obj.metadata
-            })
+        all_chunks.extend(chunk_objs)
         print(f"  📦 {doc['metadata']['doc_id']}: {len(chunk_objs)} chunks")
     
     return all_chunks
@@ -63,22 +59,20 @@ def chunk_documents(documents: list) -> list:
 
 def build_indexes(chunks: list):
     """Build and save FAISS and BM25 indexes."""
-    texts = [c["content"] for c in chunks]
-    metadatas = [c["metadata"] for c in chunks]
-    
+    # Build dense (FAISS) index
     # Build dense (FAISS) index
     print("\n🔨 Building FAISS index...")
     dense = DenseRetriever()
-    dense.add_documents(texts, metadatas)
-    dense.save_index()
-    print(f"  ✅ FAISS index saved with {len(texts)} vectors")
+    dense.add_chunks(chunks)
+    # dense.save_index() is called inside add_chunks
+    print(f"  ✅ FAISS index saved with {len(chunks)} vectors")
     
     # Build sparse (BM25) index
     print("\n🔨 Building BM25 index...")
     sparse = SparseRetriever()
-    sparse.add_documents(texts, metadatas)
-    sparse.save_index()
-    print(f"  ✅ BM25 index saved with {len(texts)} documents")
+    sparse.add_chunks(chunks)
+    # sparse.save_index() is called inside add_chunks
+    print(f"  ✅ BM25 index saved with {len(chunks)} documents")
 
 
 def main():
