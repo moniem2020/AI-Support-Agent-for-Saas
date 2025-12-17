@@ -126,4 +126,4 @@ class DenseRetriever:
 
 
 # Default dense retriever instance
-# dense_retriever = DenseRetriever()
+dense_retriever = DenseRetriever()
