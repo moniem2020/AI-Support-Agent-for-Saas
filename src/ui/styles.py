@@ -17,14 +17,14 @@ PREMIUM_CSS = """
     --warning: #f59e0b;
     --error: #ef4444;
     
-    /* Light theme - clean and professional */
+    /* Light theme - clean and professional with better contrast */
     --bg-primary: #ffffff;
     --bg-secondary: #f8fafc;
     --bg-tertiary: #f1f5f9;
     --border-color: #e2e8f0;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #94a3b8;
+    --text-primary: #0f172a;      /* Very dark for main text */
+    --text-secondary: #334155;    /* Darker for better visibility */
+    --text-muted: #64748b;        /* Still visible on white */
     
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
@@ -43,8 +43,22 @@ PREMIUM_CSS = """
     font-family: var(--font-sans) !important;
 }
 
-/* Keep Streamlit menu and controls visible */
+/* Keep ALL Streamlit controls visible */
 #MainMenu {visibility: visible !important;}
+header {visibility: visible !important;}
+.styles_viewerBadge__r5se5 {visibility: visible !important;}
+
+/* Sidebar toggle button - CRITICAL */
+button[kind="header"] {
+    visibility: visible !important;
+    display: flex !important;
+    color: var(--text-primary) !important;
+}
+
+[data-testid="collapsedControl"] {
+    visibility: visible !important;
+    display: flex !important;
+}
 
 /* Main container */
 .main {
