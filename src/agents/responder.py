@@ -104,7 +104,7 @@ Respond with ONLY a number between 0.0 and 1.0:"""
             Updated state with response and confidence
         """
         # Select model based on complexity
-        model = self.models.get(state.complexity, self.models["standard"])
+        model = self.models.get(state.complexity, self.models["moderate"])
         state.model_used = MODEL_ROUTING.get(state.complexity, MODEL_ROUTING["moderate"])
         
         # Build prompt inputs
