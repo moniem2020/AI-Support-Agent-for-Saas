@@ -86,19 +86,19 @@ async def startup_event():
         # Attempt to load existing indexes
         dense_retriever.load_index()
         sparse_retriever.load_index()
-        print("✅ Indexes loaded successfully")
+        print("[OK] Indexes loaded successfully")
     except Exception as e:
-        print(f"⚠️ Could not load indexes: {e}")
+        print(f"[WARN] Could not load indexes: {e}")
         print("   Run the indexing script to build indexes")
     
-    print("✅ API ready to serve requests")
+    print("[OK] API ready to serve requests")
 
 
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown."""
-    print("🛑 AI Support Agent API shutting down...")
+    print("[SHUTDOWN] AI Support Agent API shutting down...")
     
     try:
         from src.rag.dense_retriever import dense_retriever
@@ -106,11 +106,12 @@ async def shutdown_event():
         
         dense_retriever.save_index()
         sparse_retriever.save_index()
-        print("✅ Indexes saved")
+        print("[OK] Indexes saved")
     except Exception as e:
-        print(f"⚠️ Could not save indexes: {e}")
+        print(f"[WARN] Could not save indexes: {e}")
 
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+"""
