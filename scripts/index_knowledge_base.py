@@ -24,7 +24,7 @@ def load_markdown_files(directory: Path) -> list:
         if file_path.name.startswith("."):
             continue
             
-        print(f"  📄 Loading: {file_path.name}")
+        print(f"  Loading: {file_path.name}")
         
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -52,7 +52,7 @@ def chunk_documents(documents: list) -> list:
             metadata=doc["metadata"]
         )
         all_chunks.extend(chunk_objs)
-        print(f"  📦 {doc['metadata']['doc_id']}: {len(chunk_objs)} chunks")
+        print(f"  {doc['metadata']['doc_id']}: {len(chunk_objs)} chunks")
     
     return all_chunks
 
@@ -61,57 +61,57 @@ def build_indexes(chunks: list):
     """Build and save FAISS and BM25 indexes."""
     # Build dense (FAISS) index
     # Build dense (FAISS) index
-    print("\n🔨 Building FAISS index...")
+    print("\nBuilding FAISS index...")
     dense = DenseRetriever()
     dense.add_chunks(chunks)
     # dense.save_index() is called inside add_chunks
-    print(f"  ✅ FAISS index saved with {len(chunks)} vectors")
+    print(f"  FAISS index saved with {len(chunks)} vectors")
     
     # Build sparse (BM25) index
-    print("\n🔨 Building BM25 index...")
+    print("\nBuilding BM25 index...")
     sparse = SparseRetriever()
     sparse.add_chunks(chunks)
     # sparse.save_index() is called inside add_chunks
-    print(f"  ✅ BM25 index saved with {len(chunks)} documents")
+    print(f"  BM25 index saved with {len(chunks)} documents")
 
 
 def main():
     """Main indexing function."""
     print("=" * 50)
-    print("🚀 ProTaskFlow Knowledge Base Indexer")
+    print("ProTaskFlow Knowledge Base Indexer")
     print("=" * 50)
     
     # Check for knowledge base files
     if not KNOWLEDGE_BASE_DIR.exists():
-        print(f"❌ Knowledge base directory not found: {KNOWLEDGE_BASE_DIR}")
+        print(f"Knowledge base directory not found: {KNOWLEDGE_BASE_DIR}")
         return
     
     md_files = list(KNOWLEDGE_BASE_DIR.glob("*.md"))
     if not md_files:
-        print(f"⚠️ No markdown files found in {KNOWLEDGE_BASE_DIR}")
+        print(f"[WARN] No markdown files found in {KNOWLEDGE_BASE_DIR}")
         return
     
-    print(f"\n📂 Found {len(md_files)} markdown files")
+    print(f"\nFound {len(md_files)} markdown files")
     
     # Load documents
-    print("\n📖 Loading documents...")
+    print("\nLoading documents...")
     documents = load_markdown_files(KNOWLEDGE_BASE_DIR)
     
     if not documents:
-        print("❌ No documents loaded")
+        print("[ERROR] No documents loaded")
         return
     
     # Chunk documents
-    print("\n✂️ Chunking documents...")
+    print("\nChunking documents...")
     chunks = chunk_documents(documents)
-    print(f"\n📊 Total chunks: {len(chunks)}")
+    print(f"\nTotal chunks: {len(chunks)}")
     
     # Build indexes
     build_indexes(chunks)
     
     print("\n" + "=" * 50)
-    print("✅ Indexing complete!")
-    print(f"📁 Indexes saved to: {INDEXES_DIR}")
+    print("[OK] Indexing complete!")
+    print(f"Indexes saved to: {INDEXES_DIR}")
     print("=" * 50)
 
 
