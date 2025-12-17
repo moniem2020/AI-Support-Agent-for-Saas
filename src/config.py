@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Paths
-BASE_DIR = Path(__file__).parent.parent.parent
+BASE_DIR = Path(__file__).parent.parent
 DATA_DIR = BASE_DIR / "data"
 KNOWLEDGE_BASE_DIR = DATA_DIR / "knowledge_base"
 INDEXES_DIR = DATA_DIR / "indexes"
