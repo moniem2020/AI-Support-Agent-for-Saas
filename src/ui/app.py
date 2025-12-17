@@ -8,7 +8,7 @@ from typing import Dict, Any, List
 import json
 
 # Import premium styles
-from src.ui.styles import inject_premium_css
+from styles import inject_premium_css
 
 # Page config
 st.set_page_config(
