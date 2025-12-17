@@ -19,11 +19,7 @@ class EmbeddingService:
         return cls._instance
     
     def __init__(self):
-        if self._embeddings is None:
-            self._embeddings = GoogleGenerativeAIEmbeddings(
-                model=EMBEDDING_MODEL,
-                google_api_key=GOOGLE_API_KEY
-            )
+        pass  # Lazy initialization in property
     
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         """Embed multiple documents."""
@@ -36,6 +32,11 @@ class EmbeddingService:
     @property
     def embeddings(self) -> GoogleGenerativeAIEmbeddings:
         """Get the underlying embeddings object for LangChain compatibility."""
+        if self._embeddings is None:
+            self._embeddings = GoogleGenerativeAIEmbeddings(
+                model=EMBEDDING_MODEL,
+                google_api_key=GOOGLE_API_KEY
+            )
         return self._embeddings
 
 

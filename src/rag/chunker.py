@@ -4,7 +4,7 @@ Implements sliding window with overlap and semantic boundaries.
 """
 from typing import List, Dict, Any
 from dataclasses import dataclass
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.config import CHUNK_SIZE, CHUNK_OVERLAP
 
 

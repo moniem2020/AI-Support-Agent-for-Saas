@@ -4,7 +4,7 @@ Improves retrieval by transforming and expanding queries.
 """
 from typing import List
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 from src.config import GOOGLE_API_KEY, GEMINI_MODEL
 
