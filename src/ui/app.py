@@ -7,6 +7,9 @@ import requests
 from typing import Dict, Any, List
 import json
 
+# Import premium styles
+from src.ui.styles import inject_premium_css
+
 # Page config
 st.set_page_config(
     page_title="AI Support Agent",
@@ -14,6 +17,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Inject premium CSS
+inject_premium_css()
 
 # Custom CSS for extreme modern styling
 st.markdown("""
