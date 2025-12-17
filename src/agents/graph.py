@@ -4,7 +4,7 @@ Defines the workflow graph with conditional routing.
 """
 import time
 import uuid
-from typing import Annotated, Literal, TypedDict, Optional
+from typing import Dict, Any, Literal, Optional
 from langgraph.graph import StateGraph, END
 
 from src.agents.state import AgentState, create_initial_state
