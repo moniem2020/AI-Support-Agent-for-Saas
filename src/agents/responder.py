@@ -23,7 +23,7 @@ class ResponderAgent:
                 google_api_key=GOOGLE_API_KEY,
                 temperature=0.3
             )
-            for tier, model_name in MODEL_TIERS.items()
+            for tier, model_name in MODEL_ROUTING.items()
         }
         
         self.response_prompt = PromptTemplate(
@@ -105,7 +105,7 @@ Respond with ONLY a number between 0.0 and 1.0:"""
         """
         # Select model based on complexity
         model = self.models.get(state.complexity, self.models["standard"])
-        state.model_used = MODEL_TIERS.get(state.complexity, MODEL_TIERS["standard"])
+        state.model_used = MODEL_ROUTING.get(state.complexity, MODEL_ROUTING["moderate"])
         
         # Build prompt inputs
         context = self._build_context(state)
