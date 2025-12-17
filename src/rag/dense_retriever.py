@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 import numpy as np
 
 from langchain_community.vectorstores import FAISS
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 from src.config import INDEXES_DIR, DENSE_TOP_K
 from src.rag.embeddings import embedding_service
@@ -126,4 +126,4 @@ class DenseRetriever:
 
 
 # Default dense retriever instance
-dense_retriever = DenseRetriever()
+# dense_retriever = DenseRetriever()

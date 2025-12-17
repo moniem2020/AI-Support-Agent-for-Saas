@@ -42,7 +42,12 @@ class SparseRetriever:
                     data = pickle.load(f)
                     self.documents = data['documents']
                     self.tokenized_corpus = data['tokenized_corpus']
-                    self.bm25 = BM25Okapi(self.tokenized_corpus)
+                    
+                    if self.tokenized_corpus:
+                        self.bm25 = BM25Okapi(self.tokenized_corpus)
+                    else:
+                        print("Warning: Loaded empty BM25 index")
+                        self.bm25 = None
                 return True
             except Exception as e:
                 print(f"Failed to load BM25 index: {e}")
