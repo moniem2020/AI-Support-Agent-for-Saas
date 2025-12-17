@@ -265,25 +265,25 @@ class SupportAgentGraph:
             final_state = self.compiled.invoke(state)
             
             # Update metrics
-            metrics.set_confidence(final_state.confidence)
-            metrics.set_cache_hit(final_state.cache_hit)
-            metrics.set_escalated(final_state.should_escalate)
-            metrics.set_intent(final_state.intent)
-            metrics.set_model(final_state.model_used)
-            metrics.set_sources(len(final_state.sources))
-            metrics.set_response_length(len(final_state.response))
+            metrics.set_confidence(final_state["confidence"])
+            metrics.set_cache_hit(final_state["cache_hit"])
+            metrics.set_escalated(final_state["should_escalate"])
+            metrics.set_intent(final_state["intent"])
+            metrics.set_model(final_state["model_used"])
+            metrics.set_sources(len(final_state["sources"]))
+            metrics.set_response_length(len(final_state["response"]))
             
             return {
-                "response": final_state.response,
-                "confidence": final_state.confidence,
-                "sources": final_state.sources,
-                "intent": final_state.intent,
-                "category": final_state.category,
-                "escalated": final_state.should_escalate,
-                "escalation_reason": final_state.escalation_reason,
-                "cache_hit": final_state.cache_hit,
+                "response": final_state["response"],
+                "confidence": final_state["confidence"],
+                "sources": final_state["sources"],
+                "intent": final_state["intent"],
+                "category": final_state["category"],
+                "escalated": final_state["should_escalate"],
+                "escalation_reason": final_state.get("escalation_reason"),
+                "cache_hit": final_state["cache_hit"],
                 "latency_ms": (time.time() - start_time) * 1000,
-                "model_used": final_state.model_used,
+                "model_used": final_state["model_used"],
                 "request_id": request_id
             }
     
