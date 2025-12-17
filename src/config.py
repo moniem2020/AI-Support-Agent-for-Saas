@@ -44,14 +44,14 @@ CHUNK_SIZE = 512
 CHUNK_OVERLAP = 77  # ~15% overlap
 
 # Agent Settings
-MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
-CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.7"))
-ESCALATION_THRESHOLD = float(os.getenv("ESCALATION_THRESHOLD", "0.5"))
+MAX_RETRIES = 2
+CONFIDENCE_THRESHOLD = 0.7
+ESCALATION_THRESHOLD = 0.5
 
 # Model Routing Tiers
-MODEL_TIERS = {
-    "simple": GEMINI_MODEL,      # FAQs, greetings
-    "standard": GEMINI_MODEL,    # Info retrieval
-    "complex": GEMINI_MODEL_PRO, # Reasoning, analysis
-    "specialized": GEMINI_MODEL_PRO  # Domain-specific
+MODEL_ROUTING = {
+    "simple": LLM_TIER_1,    # Basic FAQs
+    "moderate": LLM_TIER_1,  # Standard support
+    "complex": LLM_TIER_2,   # Reasoning, analysis
 }
+```
