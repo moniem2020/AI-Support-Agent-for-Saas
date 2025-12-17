@@ -71,9 +71,13 @@ async def root():
 # Startup event
 @app.on_event("startup")
 async def startup_event():
-    """Initialize components on startup."""
-    print("🚀 AI Support Agent API starting up...")
-    print("📚 Loading knowledge base indexes...")
+    """Run on application startup."""
+    print("==> AI Support Agent API starting up...")
+    print(f"Version: {app.version}")
+    print(f"Environment: Development")
+    print("API is ready to serve requests")
+    print("=" * 50)
+    print("Loading knowledge base indexes...")
     
     try:
         from src.rag.dense_retriever import dense_retriever
