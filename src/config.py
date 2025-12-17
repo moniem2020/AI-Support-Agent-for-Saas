@@ -54,4 +54,3 @@ MODEL_ROUTING = {
     "moderate": LLM_TIER_1,  # Standard support
     "complex": LLM_TIER_2,   # Reasoning, analysis
 }
-```
