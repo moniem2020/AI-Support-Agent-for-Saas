@@ -57,16 +57,10 @@ Provide a helpful response:"""
         )
     
     def _create_models(self):
-        """Create LLM models for each tier with current API key."""
+        """Create LLM models for each tier with current API key from rotation pool."""
         for tier, model_name in MODEL_ROUTING.items():
-            # Determine which API key to use for this tier
-            key_type = API_KEY_ROUTING.get(tier, "main")
-            
-            if key_type == "fast":
-                api_key = GOOGLE_API_KEY_FAST
-            else:
-                # Use current key from pool for main/complex queries
-                api_key = self.api_keys_pool[self.current_key_index]
+            # All tiers now use the key rotation pool for quota resilience
+            api_key = self.api_keys_pool[self.current_key_index]
             
             self.models[tier] = ChatGoogleGenerativeAI(
                 model=model_name,
@@ -154,6 +148,60 @@ Provide a helpful response:"""
         Returns:
             Updated state with response and confidence
         """
+        # =============================================================
+        # ZERO-LLM PATH: Hardcoded responses for simple intents
+        # These don't need LLM at all - saves quota completely!
+        # =============================================================
+        
+        simple_responses = {
+            "greeting": [
+                "Hi there! 👋 How can I help you today?",
+                "Hello! Welcome to ProTaskFlow support. What can I assist you with?",
+                "Hey! I'm here to help. What would you like to know?",
+            ],
+            "farewell": [
+                "Goodbye! Feel free to come back if you have more questions.",
+                "Take care! Have a great day!",
+                "Bye! Don't hesitate to reach out if you need anything.",
+            ],
+            "appreciation": [
+                "You're welcome! Is there anything else I can help with?",
+                "Happy to help! Let me know if you have other questions.",
+                "Glad I could assist! Anything else you need?",
+            ],
+            "small_talk": [
+                "I'm doing great, thanks for asking! How can I help you today?",
+                "I'm an AI assistant here to help with your questions. What can I do for you?",
+                "Nice to meet you! I'm here to help with any questions about our product.",
+            ],
+            "chitchat": [
+                "I appreciate the chat! Is there something specific I can help you with today?",
+                "Thanks! If you have any questions about our product, I'm here to help.",
+                "Sure thing! Let me know if there's anything I can assist with.",
+            ],
+        }
+        
+        # Check if we can use a hardcoded response (NO LLM CALL!)
+        if state.intent in simple_responses:
+            import random
+            responses = simple_responses[state.intent]
+            state.response = random.choice(responses)
+            state.confidence = 0.95  # High confidence for hardcoded responses
+            state.sources = []
+            state.model_used = "hardcoded"  # No model used!
+            
+            # Add to messages
+            state.messages.append(Message(
+                role="assistant",
+                content=state.response,
+                metadata={"confidence": state.confidence, "sources": [], "hardcoded": True}
+            ))
+            return state
+        
+        # =============================================================
+        # LLM PATH: Only for product-related questions
+        # =============================================================
+        
         # Select model based on complexity
         model = self.models.get(state.complexity, self.models["moderate"])
         state.model_used = MODEL_ROUTING.get(state.complexity, MODEL_ROUTING["moderate"])

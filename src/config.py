@@ -33,24 +33,24 @@ if not GOOGLE_API_KEYS_POOL and GOOGLE_API_KEY:
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "models/text-embedding-004")
 
-# Model Routing (tier-based) - using gemini-2.5-flash (confirmed working with quota)
-# FAST models use separate API key to avoid quota conflicts
-LLM_TIER_FAST = "gemini-2.0-flash-lite"  # Fastest model for greetings/simple queries
-LLM_TIER_1 = "gemini-2.5-flash"  # Standard queries
-LLM_TIER_2 = "gemini-2.5-flash"  # Complex queries (same model for stability)
+# Model Routing (tier-based) - ALL tiers use gemini-2.5-flash for quota resilience
+# All tiers share the same key rotation pool to maximize availability
+LLM_TIER_FAST = "gemini-2.5-flash"  # Same model, uses key rotation
+LLM_TIER_1 = "gemini-2.5-flash"    # Standard queries
+LLM_TIER_2 = "gemini-2.5-flash"    # Complex queries
 
-# Model routing map - maps complexity to (model_name, api_key)
+# Model routing map - all use same model for consistency
 MODEL_ROUTING = {
     "simple": LLM_TIER_FAST,
     "moderate": LLM_TIER_1,
     "complex": LLM_TIER_2,
 }
 
-# API key routing - which key to use for which tier
+# API key routing - ALL tiers now use rotation pool ("pool")
 API_KEY_ROUTING = {
-    "simple": "fast",      # Use fast key
-    "moderate": "main",    # Use main key  
-    "complex": "main",     # Use main key
+    "simple": "pool",     # Use key rotation pool
+    "moderate": "pool",   # Use key rotation pool
+    "complex": "pool",    # Use key rotation pool
 }
 
 # Cache Settings
