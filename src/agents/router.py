@@ -142,7 +142,18 @@ Respond with ONLY the JSON object:"""
         }
         
         # Check for exact matches or query contains the pattern
+        # Use word boundary checking to avoid false matches (e.g., 'yo' in 'you')
         def matches_category(patterns: set) -> bool:
+            if query_lower in patterns:
+                return True
+            # For multi-word patterns, check if they appear in the query
+            for pattern in patterns:
+                if ' ' in pattern and pattern in query_lower:
+                    return True
+            return False
+        
+        def matches_category_loose(patterns: set) -> bool:
+            """Looser matching for simple single-word patterns."""
             if query_lower in patterns:
                 return True
             for pattern in patterns:
@@ -150,34 +161,7 @@ Respond with ONLY the JSON object:"""
                     return True
             return False
         
-        # === GREETING DETECTION ===
-        if matches_category(greetings) or len(query_lower) <= 3:
-            state.intent = "greeting"
-            state.complexity = "simple"
-            state.category = "general"
-            state.urgency = 0.1
-            state.sentiment = 0.8
-            return state
-        
-        # === FAREWELL DETECTION ===
-        if matches_category(farewells):
-            state.intent = "farewell"
-            state.complexity = "simple"
-            state.category = "general"
-            state.urgency = 0.1
-            state.sentiment = 0.7
-            return state
-        
-        # === APPRECIATION DETECTION ===
-        if matches_category(appreciation):
-            state.intent = "appreciation"
-            state.complexity = "simple"
-            state.category = "general"
-            state.urgency = 0.1
-            state.sentiment = 0.9
-            return state
-        
-        # === SMALL TALK DETECTION ===
+        # === SMALL TALK DETECTION (check BEFORE greetings to avoid false matches) ===
         if matches_category(small_talk):
             state.intent = "small_talk"
             state.complexity = "simple"
@@ -186,8 +170,35 @@ Respond with ONLY the JSON object:"""
             state.sentiment = 0.6
             return state
         
+        # === GREETING DETECTION ===
+        if matches_category(greetings) or (len(query_lower) <= 3 and query_lower not in {"who", "why", "how", "what"}):
+            state.intent = "greeting"
+            state.complexity = "simple"
+            state.category = "general"
+            state.urgency = 0.1
+            state.sentiment = 0.8
+            return state
+        
+        # === FAREWELL DETECTION ===
+        if matches_category_loose(farewells):
+            state.intent = "farewell"
+            state.complexity = "simple"
+            state.category = "general"
+            state.urgency = 0.1
+            state.sentiment = 0.7
+            return state
+        
+        # === APPRECIATION DETECTION ===
+        if matches_category_loose(appreciation):
+            state.intent = "appreciation"
+            state.complexity = "simple"
+            state.category = "general"
+            state.urgency = 0.1
+            state.sentiment = 0.9
+            return state
+        
         # === OFF-TOPIC / CHITCHAT DETECTION ===
-        if matches_category(off_topic) and len(query_words) <= 5:
+        if matches_category_loose(off_topic) and len(query_words) <= 5:
             state.intent = "chitchat"
             state.complexity = "simple"
             state.category = "general"
