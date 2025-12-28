@@ -57,13 +57,9 @@ Generate exactly 3 alternative queries, one per line, without numbering:"""
         Returns:
             Hypothetical document/answer
         """
-        try:
-            prompt = self.hyde_prompt.format(query=query)
-            response = self.llm.invoke(prompt)
-            return response.content
-        except Exception as e:
-            print(f"HyDE generation failed: {e}")
-            return query  # Fallback to original query
+        # DISABLED: Skip LLM call to save API quota
+        # The retrieval works well enough without HyDE for most queries
+        return query  # Always return original query
     
     def generate_multi_queries(self, query: str) -> List[str]:
         """
@@ -77,20 +73,24 @@ Generate exactly 3 alternative queries, one per line, without numbering:"""
         """
         queries = [query]  # Always include original
         
-        try:
-            prompt = self.multi_query_prompt.format(query=query)
-            response = self.llm.invoke(prompt)
-            
-            # Parse response into separate queries
-            variations = [
-                q.strip() 
-                for q in response.content.strip().split('\n') 
-                if q.strip()
-            ]
-            queries.extend(variations[:3])  # Limit to 3 variations
-            
-        except Exception as e:
-            print(f"Multi-query generation failed: {e}")
+        queries = [query]  # Always include original
+        
+        # DISABLED: Skip LLM call to save API quota
+        # The retrieval works well enough with just the original query
+        # try:
+        #     prompt = self.multi_query_prompt.format(query=query)
+        #     response = self.llm.invoke(prompt)
+        #     
+        #     # Parse response into separate queries
+        #     variations = [
+        #         q.strip() 
+        #         for q in response.content.strip().split('\n') 
+        #         if q.strip()
+        #     ]
+        #     queries.extend(variations[:3])  # Limit to 3 variations
+        #     
+        # except Exception as e:
+        #     print(f"Multi-query generation failed: {e}")
         
         return queries
     
