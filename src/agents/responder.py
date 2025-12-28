@@ -96,17 +96,22 @@ Provide a helpful response:"""
         keys_tried = 0
         max_tries = max_retries or len(self.api_keys_pool)  # Try all keys by default
         
+        print(f"[INVOKE] Starting with key {self.current_key_index}, will try up to {max_tries} keys", flush=True)
+        
         while keys_tried < max_tries:
             try:
                 # Get current model for this tier
                 current_model = self.models.get(tier, model)
+                print(f"[INVOKE] Trying key {self.current_key_index}...", flush=True)
                 response = current_model.invoke(prompt)
+                print(f"[INVOKE] SUCCESS with key {self.current_key_index}", flush=True)
                 return response
             except Exception as e:
                 error_str = str(e).lower()
+                print(f"[INVOKE] ERROR with key {self.current_key_index}: {str(e)[:100]}", flush=True)
                 # Check if it's a quota error
-                if "quota" in error_str or "429" in error_str or "rate" in error_str:
-                    print(f"[QUOTA ERROR] Key {self.current_key_index} quota exceeded, rotating...")
+                if "quota" in error_str or "429" in error_str or "rate" in error_str or "resource" in error_str:
+                    print(f"[QUOTA ERROR] Key {self.current_key_index} quota exceeded, rotating...", flush=True)
                     last_error = e
                     keys_tried += 1
                     if self._rotate_key():
@@ -115,9 +120,11 @@ Provide a helpful response:"""
                         break  # No more keys to try
                 else:
                     # Non-quota error, don't rotate
+                    print(f"[INVOKE] Non-quota error, raising", flush=True)
                     raise e
         
         # All keys exhausted
+        print(f"[INVOKE] All {keys_tried} keys exhausted!", flush=True)
         raise last_error or Exception("All API keys quota exceeded")
     
     def _build_context(self, state: AgentState) -> str:
