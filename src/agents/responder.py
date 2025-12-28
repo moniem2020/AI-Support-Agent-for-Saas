@@ -150,29 +150,29 @@ Respond with ONLY a number between 0.0 and 1.0:"""
         return state
     
     def _calculate_confidence(self, state: AgentState, context: str) -> float:
-        """Calculate response confidence using LLM."""
-        try:
-            prompt = self.confidence_prompt.format(
-                query=state.current_query,
-                response=state.response,
-                context=context
-            )
-            
-            # Use flash model for quick confidence check
-            model = self.models["simple"]
-            response = model.invoke(prompt)
-            
-            # Parse confidence score
-            score_text = response.content.strip()
-            score = float(score_text)
-            return max(0.0, min(1.0, score))
-            
-        except Exception as e:
-            print(f"Confidence calculation failed: {e}")
-            # Fallback: base confidence on retrieval scores
-            if state.retrieval_results:
-                return min(0.8, state.retrieval_results[0].score)
-            return 0.5
+        """
+        Calculate response confidence based on retrieval quality.
+        Uses retrieval scores instead of LLM to avoid quota issues.
+        """
+        # Base confidence on retrieval results
+        if not state.retrieval_results:
+            return 0.4  # Low confidence without sources
+        
+        # Use top retrieval score as base
+        top_score = state.retrieval_results[0].score if hasattr(state.retrieval_results[0], 'score') else 0.7
+        
+        # Boost confidence for more sources
+        source_bonus = min(0.15, len(state.retrieval_results) * 0.03)
+        
+        # Check if context actually contains relevant info
+        query_words = set(state.current_query.lower().split())
+        context_words = set(context.lower().split())
+        overlap = len(query_words & context_words) / max(len(query_words), 1)
+        relevance_bonus = overlap * 0.1
+        
+        # Calculate final confidence (cap at 0.95)
+        confidence = min(0.95, top_score + source_bonus + relevance_bonus)
+        return max(0.5, confidence)  # Minimum 0.5 to avoid unnecessary escalation
 
 
 # Agent instance
