@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Support Agent | ProTaskFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                    </div>
+                    <span class="logo-text">ProTaskFlow</span>
+                    <span class="logo-badge">AI Support</span>
+                </div>
+                <div class="header-actions">
+                    <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5" />
+                            <path
+                                d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                        </svg>
+                        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                        </svg>
+                    </button>
+                    <div class="header-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Online</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Container -->
+        <main class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Message -->
+                <div class="message assistant">
+                    <div class="message-avatar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                            <line x1="9" y1="9" x2="9.01" y2="9" />
+                            <line x1="15" y1="9" x2="15.01" y2="9" />
+                        </svg>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">AI Assistant</span>
+                            <span class="message-time">Just now</span>
+                        </div>
+                        <div class="message-text">
+                            <p>Hi! I'm your AI support assistant. I can help you with:</p>
+                            <ul>
+                                <li>Getting started with ProTaskFlow</li>
+                                <li>Understanding features and billing</li>
+                                <li>Troubleshooting issues</li>
+                                <li>Integrations and setup</li>
+                            </ul>
+                            <p>How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                <div class="message assistant">
+                    <div class="message-avatar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                            <line x1="9" y1="9" x2="9.01" y2="9" />
+                            <line x1="15" y1="9" x2="15.01" y2="9" />
+                        </svg>
+                    </div>
+                    <div class="message-content">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Input Area -->
+        <footer class="input-container">
+            <div class="input-wrapper">
+                <input type="text" id="messageInput" class="message-input" placeholder="Type your message..."
+                    autocomplete="off">
+                <button class="send-button" id="sendButton" title="Send message">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                </button>
+            </div>
+            <p class="input-hint">Press Enter to send • AI responses are generated from our knowledge base</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+
+</html>
