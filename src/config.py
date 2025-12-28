@@ -23,12 +23,12 @@ INDEXES_DIR.mkdir(parents=True, exist_ok=True)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Model Configuration
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "models/text-embedding-004")
 
-# Model Routing (tier-based) - using flash-lite for better free tier quota
-LLM_TIER_1 = "gemini-2.0-flash-lite"  # Fast, simple queries
-LLM_TIER_2 = "gemini-2.0-flash"       # Complex queries
+# Model Routing (tier-based) - using gemini-2.5-flash (confirmed working with quota)
+LLM_TIER_1 = "gemini-2.5-flash"  # Fast, simple queries
+LLM_TIER_2 = "gemini-2.5-flash"  # Complex queries (same model for stability)
 
 # Cache Settings
 SEMANTIC_CACHE_THRESHOLD = float(os.getenv("SEMANTIC_CACHE_THRESHOLD", "0.90"))
