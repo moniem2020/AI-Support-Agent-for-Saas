@@ -29,6 +29,32 @@ class ResponderAgent:
         # Create models with appropriate API keys based on tier
         self.models = {}
         self._create_models()
+        
+        # Response generation prompt
+        self.response_prompt = PromptTemplate(
+            input_variables=["query", "context", "history", "category"],
+            template="""You are a helpful SaaS customer support agent. Answer the customer's question using ONLY the provided context.
+
+RULES:
+1. Base your answer ONLY on the provided context
+2. If the context doesn't contain the answer, say so clearly
+3. Be concise but thorough
+4. Use a friendly, professional tone
+5. Include specific steps if applicable
+6. Cite sources when referencing specific information
+
+Category: {category}
+
+Previous conversation:
+{history}
+
+Relevant Documentation:
+{context}
+
+Customer Question: {query}
+
+Provide a helpful response:"""
+        )
     
     def _create_models(self):
         """Create LLM models for each tier with current API key."""
@@ -96,52 +122,6 @@ class ResponderAgent:
         
         # All keys exhausted
         raise last_error or Exception("All API keys quota exceeded")
-        
-        self.response_prompt = PromptTemplate(
-            input_variables=["query", "context", "history", "category"],
-            template="""You are a helpful SaaS customer support agent. Answer the customer's question using ONLY the provided context.
-
-RULES:
-1. Base your answer ONLY on the provided context
-2. If the context doesn't contain the answer, say so clearly
-3. Be concise but thorough
-4. Use a friendly, professional tone
-5. Include specific steps if applicable
-6. Cite sources when referencing specific information
-
-Category: {category}
-
-Previous conversation:
-{history}
-
-Relevant Documentation:
-{context}
-
-Customer Question: {query}
-
-Provide a helpful response:"""
-        )
-        
-        self.confidence_prompt = PromptTemplate(
-            input_variables=["query", "response", "context"],
-            template="""Rate how well this response is grounded in the provided context.
-
-Question: {query}
-
-Context:
-{context}
-
-Response: {response}
-
-Rate from 0.0 to 1.0:
-- 1.0: Response is fully supported by context
-- 0.7-0.9: Mostly supported with minor inferences
-- 0.4-0.6: Partially supported, some gaps
-- 0.1-0.3: Poorly supported, significant gaps
-- 0.0: Not supported or contradicts context
-
-Respond with ONLY a number between 0.0 and 1.0:"""
-        )
     
     def _build_context(self, state: AgentState) -> str:
         """Build context string from retrieval results."""
