@@ -234,7 +234,7 @@ Respond with ONLY the JSON object:"""
         
         has_product_keyword = any(kw in query_lower for kw in product_keywords)
         
-        # Short queries without product keywords = simple
+        # Short queries without product keywords = simple (goes to hardcoded response)
         if len(query_words) <= 4 and not has_product_keyword:
             state.intent = "question"
             state.complexity = "simple"
@@ -242,6 +242,26 @@ Respond with ONLY the JSON object:"""
             state.urgency = 0.3
             state.sentiment = 0.5
             return state
+        
+        # =============================================================
+        # HEURISTIC ROUTING: Skip LLM classification for common patterns
+        # This saves API quota and reduces latency
+        # =============================================================
+        
+        common_question_patterns = [
+            "how to", "what is", "what are", "how do", "how can", 
+            "where is", "where can", "when can", "can i", "can you",
+            "tell me", "show me", "help me", "get started", "getting started"
+        ]
+        
+        # If query starts with common question pattern, skip LLM classification
+        if any(query_lower.startswith(p) or p in query_lower for p in common_question_patterns):
+            state.intent = "question"
+            state.complexity = "moderate"  # Moderate to trigger retrieval
+            state.category = "support"
+            state.urgency = 0.4
+            state.sentiment = 0.5
+            return state  # Skip LLM classification!
         
         # Build conversation history
         history = ""
