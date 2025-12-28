@@ -24,7 +24,7 @@ class SparseRetriever:
         self.tokenized_corpus: List[List[str]] = []
         
         # Try to load existing index
-        self._load_index()
+        self.load_index()
     
     def _tokenize(self, text: str) -> List[str]:
         """Simple tokenization with lowercasing and punctuation removal."""
@@ -34,7 +34,7 @@ class SparseRetriever:
         # Remove very short tokens
         return [t for t in tokens if len(t) > 2]
     
-    def _load_index(self) -> bool:
+    def load_index(self) -> bool:
         """Load existing BM25 index if available."""
         if self.index_path.exists():
             try:
