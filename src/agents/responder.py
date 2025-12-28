@@ -6,7 +6,7 @@ from typing import List, Dict, Any
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 
-from src.config import GOOGLE_API_KEY, MODEL_ROUTING
+from src.config import GOOGLE_API_KEY, GOOGLE_API_KEY_FAST, MODEL_ROUTING, API_KEY_ROUTING
 from src.agents.state import AgentState, Message
 
 
@@ -17,14 +17,18 @@ class ResponderAgent:
     """
     
     def __init__(self):
-        self.models = {
-            tier: ChatGoogleGenerativeAI(
+        # Create models with appropriate API keys based on tier
+        self.models = {}
+        for tier, model_name in MODEL_ROUTING.items():
+            # Determine which API key to use for this tier
+            key_type = API_KEY_ROUTING.get(tier, "main")
+            api_key = GOOGLE_API_KEY_FAST if key_type == "fast" else GOOGLE_API_KEY
+            
+            self.models[tier] = ChatGoogleGenerativeAI(
                 model=model_name,
-                google_api_key=GOOGLE_API_KEY,
+                google_api_key=api_key,
                 temperature=0.3
             )
-            for tier, model_name in MODEL_ROUTING.items()
-        }
         
         self.response_prompt = PromptTemplate(
             input_variables=["query", "context", "history", "category"],

@@ -19,16 +19,33 @@ INDEXES_DIR = DATA_DIR / "indexes"
 KNOWLEDGE_BASE_DIR.mkdir(parents=True, exist_ok=True)
 INDEXES_DIR.mkdir(parents=True, exist_ok=True)
 
-# Google API
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+# Google API Keys (dual-key routing for quota management)
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Main key for complex queries
+GOOGLE_API_KEY_FAST = os.getenv("GOOGLE_API_KEY_FAST", GOOGLE_API_KEY)  # Fast key for simple queries
 
 # Model Configuration
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "models/text-embedding-004")
 
 # Model Routing (tier-based) - using gemini-2.5-flash (confirmed working with quota)
-LLM_TIER_1 = "gemini-2.5-flash"  # Fast, simple queries
+# FAST models use separate API key to avoid quota conflicts
+LLM_TIER_FAST = "gemini-2.0-flash-lite"  # Fastest model for greetings/simple queries
+LLM_TIER_1 = "gemini-2.5-flash"  # Standard queries
 LLM_TIER_2 = "gemini-2.5-flash"  # Complex queries (same model for stability)
+
+# Model routing map - maps complexity to (model_name, api_key)
+MODEL_ROUTING = {
+    "simple": LLM_TIER_FAST,
+    "moderate": LLM_TIER_1,
+    "complex": LLM_TIER_2,
+}
+
+# API key routing - which key to use for which tier
+API_KEY_ROUTING = {
+    "simple": "fast",      # Use fast key
+    "moderate": "main",    # Use main key  
+    "complex": "main",     # Use main key
+}
 
 # Cache Settings
 SEMANTIC_CACHE_THRESHOLD = float(os.getenv("SEMANTIC_CACHE_THRESHOLD", "0.90"))
@@ -48,9 +65,3 @@ MAX_RETRIES = 2
 CONFIDENCE_THRESHOLD = 0.7
 ESCALATION_THRESHOLD = 0.5
 
-# Model Routing Tiers
-MODEL_ROUTING = {
-    "simple": LLM_TIER_1,    # Basic FAQs
-    "moderate": LLM_TIER_1,  # Standard support
-    "complex": LLM_TIER_2,   # Reasoning, analysis
-}
