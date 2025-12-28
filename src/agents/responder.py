@@ -22,9 +22,11 @@ class ResponderAgent:
     """
     
     def __init__(self):
-        # Track current key index for rotation
-        self.current_key_index = 0
+        # Track current key index for rotation - start random to distribute load
+        import random
         self.api_keys_pool = GOOGLE_API_KEYS_POOL or [GOOGLE_API_KEY]
+        self.current_key_index = random.randint(0, len(self.api_keys_pool) - 1) if self.api_keys_pool else 0
+        print(f"[RESPONDER] Initialized with key index {self.current_key_index} of {len(self.api_keys_pool)} keys")
         
         # Create models with appropriate API keys based on tier
         self.models = {}
