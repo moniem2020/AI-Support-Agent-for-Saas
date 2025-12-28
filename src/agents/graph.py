@@ -160,6 +160,10 @@ class SupportAgentGraph:
     
     def _quality_check(self, state: AgentState) -> AgentState:
         """Validate response quality."""
+        # Hardcoded responses (greetings etc) skip all quality checks
+        if state.model_used == "hardcoded":
+            return state
+        
         # Simple quality checks
         if len(state.response) < 20:
             state.confidence = min(state.confidence, 0.3)
@@ -228,6 +232,10 @@ class SupportAgentGraph:
     
     def _quality_decision(self, state: AgentState) -> Literal["good", "retry", "escalate"]:
         """Determine quality of response."""
+        # Hardcoded responses (greetings etc) always pass - no quality check needed
+        if state.model_used == "hardcoded":
+            return "good"
+        
         if state.confidence >= CONFIDENCE_THRESHOLD:
             return "good"
         
