@@ -161,6 +161,14 @@ Respond with ONLY the JSON object:"""
                     return True
             return False
         
+        def starts_with_any(patterns: set) -> bool:
+            """Check if query starts with any of the patterns."""
+            first_word = query_lower.split()[0] if query_lower.split() else ""
+            return first_word in patterns
+        
+        # Single word greetings for starts_with check
+        greeting_starters = {"hi", "hello", "hey", "hiya", "howdy", "yo", "sup"}
+        
         # === SMALL TALK DETECTION (check BEFORE greetings to avoid false matches) ===
         if matches_category(small_talk):
             state.intent = "small_talk"
@@ -170,8 +178,10 @@ Respond with ONLY the JSON object:"""
             state.sentiment = 0.6
             return state
         
-        # === GREETING DETECTION ===
-        if matches_category(greetings) or (len(query_lower) <= 3 and query_lower not in {"who", "why", "how", "what"}):
+        # === GREETING DETECTION (including 'hey you', 'hello there', etc.) ===
+        if (matches_category(greetings) or 
+            starts_with_any(greeting_starters) or
+            (len(query_lower) <= 3 and query_lower not in {"who", "why", "how", "what"})):
             state.intent = "greeting"
             state.complexity = "simple"
             state.category = "general"
