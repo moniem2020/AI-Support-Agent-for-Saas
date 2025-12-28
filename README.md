@@ -2,229 +2,199 @@
 
 Enterprise-grade AI-powered customer support agent with RAG (Retrieval-Augmented Generation), semantic caching, and multi-agent orchestration using LangGraph.
 
+## 🚀 Key Features
+
+- **Zero-LLM Simple Queries**: Greetings, farewells, and casual conversation are handled instantly without any API calls
+- **Smart Intent Classification**: Pattern-based detection for 100+ simple phrases (greetings, appreciation, small talk, etc.)
+- **API Key Rotation**: 4-key pool with automatic failover for quota resilience
+- **Hybrid RAG Pipeline**: Combines dense (FAISS) and sparse (BM25) retrieval
+- **Professional Flask UI**: Beautiful dark/light theme with glassmorphism design
+- **Multi-Agent Orchestration**: LangGraph-based workflow with specialized agents
+
 ## Architecture
 
 ```mermaid
 graph TB
-    User[User Query] --> UI[Streamlit UI]
-    UI --> API[FastAPI Backend]
+    User[User Query] --> Security[Security Check]
+    Security --> Route[Router Agent]
     
-    API --> Security[Security Layer]
-    Security --> PIIDetector[PII Detection]
-    Security --> InjectionDefense[Injection Defense]
+    Route -->|Simple Intent| DirectRespond[Hardcoded Response<br/>ZERO API Calls!]
+    Route -->|Urgent| Escalation[Escalation Agent]
+    Route -->|Product Question| Cache[Semantic Cache]
     
-    Security --> Cache[Semantic Cache Check]
-    Cache -->|Hit| Response[Return Cached Response]
-    Cache -->|Miss| Router[Router Agent]
+    Cache -->|Hit| Response[Return Response]
+    Cache -->|Miss| Retrieve[Hybrid RAG<br/>Dense + Sparse]
     
-    Router --> Intent[Intent Classification]
-    Intent -->|Simple| Retriever[Retriever Agent]
-    Intent -->|Complex| Retriever
-    Intent -->|Urgent| Escalation[Escalation Agent]
+    Retrieve --> Responder[Responder Agent<br/>Key Rotation Pool]
+    Responder --> Quality[Quality Check]
     
-    Retriever --> Hybrid[Hybrid RAG]
-    Hybrid --> Dense[Dense Retriever<br/>FAISS + Embeddings]
-    Hybrid --> Sparse[Sparse Retriever<br/>BM25]
-    
-    Dense --> Rerank[Reranker]
-    Sparse --> Rerank
-    
-    Rerank --> Responder[Responder Agent]
-    Responder --> LLM[Google Gemini]
-    
-    LLM --> Quality[Quality Check]
     Quality -->|Pass| Response
     Quality -->|Fail| Escalation
     
-    Response --> UI
+    DirectRespond --> Response
+    Escalation --> Response
     
-    subgraph "Data Layer"
-        KB[(Knowledge Base<br/>Markdown Files)]
-        FAISS[(FAISS Index)]
-        BM25[(BM25 Index)]
-    end
-    
-    KB --> Dense
-    KB --> Sparse
-    FAISS --> Dense
-    BM25 --> Sparse
-    
-    subgraph "Observability"
-        Metrics[Metrics Collector]
-        Eval[Response Evaluation]
-    end
-    
-    Quality --> Metrics
-    Quality --> Eval
-    
-    style User fill:#e1f5ff
-    style UI fill:#fff4e1
-    style API fill:#ffe1e1
-    style Security fill:#f0e1ff
-    style Cache fill:#e1ffe1
-    style Router fill:#ffe1f0
-    style Hybrid fill:#e1f0ff
-    style LLM fill:#fff0e1
+    style DirectRespond fill:#22c55e
+    style Route fill:#6366f1
+    style Responder fill:#f59e0b
 ```
-
-## Features
-
-### Core Capabilities
-- **Multi-Agent Orchestration**: LangGraph-based workflow with specialized agents
-- **Hybrid RAG Pipeline**: Combines dense (FAISS) and sparse (BM25) retrieval
-- **Semantic Caching**: Reduces latency and API costs for similar queries
-- **Security-First**: PII detection/anonymization and prompt injection defense
-- **Quality Assurance**: Automated response evaluation and escalation
-- **Observability**: Comprehensive metrics and performance tracking
-
-### Key Components
-
-#### 🔐 Security Layer
-- **PII Detection**: Automatically detects and anonymizes sensitive information
-- **Injection Defense**: Protects against prompt injection attacks
-- **Input Validation**: Sanitizes and validates all user inputs
-
-#### 🧠 Multi-Agent System
-- **Router Agent**: Classifies intent and determines routing strategy
-- **Retriever Agent**: Performs adaptive hybrid retrieval
-- **Responder Agent**: Generates contextual, grounded responses
-- **Escalation Agent**: Handles complex cases requiring human intervention
-- **Quality Agent**: Validates response quality and confidence
-
-#### 📚 RAG Pipeline
-- **Dense Retrieval**: Semantic search using FAISS + Google text-embedding-004
-- **Sparse Retrieval**: Keyword matching using BM25
-- **Reranking**: Combines and reranks results for optimal relevance
-- **Adaptive Strategy**: Adjusts retrieval based on query complexity
-
-#### ⚡ Performance Optimization
-- **Semantic Cache**: In-memory cache with similarity search
-- **Lazy Loading**: Deferred initialization to reduce startup time
-- **Streaming Responses**: Real-time response generation
-- **Model Routing**: Tier-based model selection (Gemini Flash/Pro)
 
 ## Quick Start
 
 ### Prerequisites
 - Python 3.11+
-- Google AI API Key
+- Google AI API Keys (at least 1, recommended 4 for quota resilience)
 
 ### Installation
 
-1. **Clone the repository**
 ```bash
+# Clone the repository
 git clone https://github.com/moniem2020/ai-support-agent.git
 cd ai-support-agent
-```
 
-2. **Install dependencies**
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-3. **Set up environment variables**
-```bash
+# Set up environment variables
 cp .env.example .env
-# Edit .env and add your GOOGLE_API_KEY
+# Edit .env with your API keys
 ```
 
-4. **Build knowledge base indexes**
+### Environment Variables
+
+```env
+GOOGLE_API_KEY=your_main_api_key
+GOOGLE_API_KEY_FAST=your_fast_tier_key
+GOOGLE_API_KEYS_POOL=key1,key2,key3,key4
+```
+
+### Build Knowledge Base
+
 ```bash
 python scripts/index_knowledge_base.py
 ```
 
-### Running the Application
+### Run the Application
 
-**Option 1: Start services separately**
+**Terminal 1: API Server**
 ```bash
-# Terminal 1: Start API server
 uvicorn src.api.main:app --reload
-
-# Terminal 2: Start Streamlit UI
-streamlit run src/ui/app.py
 ```
 
-**Option 2: Use the combined runner (recommended)**
+**Terminal 2: Flask UI**
 ```bash
-python run_all.py
+python src/web/app.py
 ```
 
-The application will be available at:
-- **Streamlit UI**: http://localhost:8501
+Access the application:
+- **Flask UI**: http://localhost:5000
 - **API Docs**: http://localhost:8000/docs
 - **API Health**: http://localhost:8000/api/v1/health
+
+## Query Processing Flow
+
+| Query Type | Example | LLM Called? | API Calls |
+|------------|---------|-------------|-----------|
+| Greeting | "hi", "hello", "hey" | ❌ NO | 0 |
+| Farewell | "bye", "thanks bye" | ❌ NO | 0 |
+| Appreciation | "thanks", "thank you" | ❌ NO | 0 |
+| Small Talk | "how are you" | ❌ NO | 0 |
+| Chitchat | "ok", "cool", "lol" | ❌ NO | 0 |
+| Product Question | "how do I setup?" | ✅ YES | 1-2 |
+
+## Key Components
+
+### 🧠 Router Agent (`src/agents/router.py`)
+- **Hybrid Classification**: Pattern-based for 140+ simple phrases, LLM for complex queries
+- **Intent Categories**: greeting, farewell, appreciation, small_talk, chitchat, question, complaint
+- **Product Keywords**: Detects billing, account, features, etc. for proper routing
+
+### 🔄 API Key Rotation (`src/agents/responder.py`)
+- **4-Key Pool**: Rotates through API keys on quota errors
+- **Automatic Failover**: Catches 429 errors and switches keys
+- **Tier-Based Routing**: All tiers can use the key pool
+
+### 🎨 Flask UI (`src/web/`)
+- **Dark/Light Themes**: Toggle with sun/moon button
+- **Modern Design**: Glassmorphism, Inter font, smooth animations
+- **Responsive**: Works on mobile and desktop
+
+### 📚 RAG Pipeline (`src/rag/`)
+- **Dense Retrieval**: FAISS + Google text-embedding-004
+- **Sparse Retrieval**: BM25 keyword matching
+- **Reranking**: Combines and reranks for relevance
+
+## Configuration
+
+Key settings in `src/config.py`:
+
+```python
+# Model Routing - ALL use gemini-2.5-flash for quota resilience
+LLM_TIER_FAST = "gemini-2.5-flash"
+LLM_TIER_1 = "gemini-2.5-flash"
+LLM_TIER_2 = "gemini-2.5-flash"
+
+# All tiers use key rotation pool
+API_KEY_ROUTING = {
+    "simple": "pool",
+    "moderate": "pool",
+    "complex": "pool",
+}
+
+# RAG Settings
+CHUNK_SIZE = 512
+DENSE_TOP_K = 10
+SPARSE_TOP_K = 10
+RERANK_TOP_K = 5
+
+# Quality Thresholds
+CONFIDENCE_THRESHOLD = 0.7
+ESCALATION_THRESHOLD = 0.5
+```
 
 ## Project Structure
 
 ```
 ai-support-agent/
 ├── src/
-│   ├── agents/          # Multi-agent orchestration
-│   │   ├── graph.py     # LangGraph workflow
-│   │   ├── router.py    # Intent classification
-│   │   ├── retriever.py # Adaptive retrieval
-│   │   ├── responder.py # Response generation
+│   ├── agents/           # Multi-agent orchestration
+│   │   ├── graph.py      # LangGraph workflow (routes simple queries directly)
+│   │   ├── router.py     # Intent classification (pattern + LLM hybrid)
+│   │   ├── responder.py  # Response generation (key rotation + hardcoded)
 │   │   └── escalation.py # Human handoff
-│   ├── api/             # FastAPI backend
-│   │   ├── main.py      # API entry point
-│   │   └── routes.py    # API endpoints
-│   ├── cache/           # Semantic caching
-│   ├── rag/             # RAG pipeline
-│   │   ├── chunker.py   # Document chunking
-│   │   ├── dense_retriever.py   # FAISS retrieval
-│   │   ├── sparse_retriever.py  # BM25 retrieval
-│   │   ├── reranker.py  # Result reranking
-│   │   └── embeddings.py # Embedding service
-│   ├── security/        # Security modules
-│   │   ├── pii_detector.py      # PII detection
-│   │   └── injection_defense.py # Injection prevention
-│   ├── observability/   # Metrics and evaluation
-│   └── ui/              # Streamlit interface
+│   ├── api/              # FastAPI backend
+│   ├── cache/            # Semantic caching
+│   ├── rag/              # RAG pipeline (dense + sparse)
+│   ├── security/         # PII detection, injection defense
+│   ├── web/              # Flask UI
+│   │   ├── app.py        # Flask application
+│   │   ├── templates/    # HTML templates
+│   │   └── static/       # CSS/JS (dark/light themes)
+│   └── ui/               # Streamlit UI (legacy)
 ├── data/
-│   ├── knowledge_base/  # Markdown knowledge base
-│   └── indexes/         # FAISS and BM25 indexes
-├── scripts/
-│   └── index_knowledge_base.py  # Index builder
-└── requirements.txt
-```
-
-## Configuration
-
-Key configuration parameters in `src/config.py`:
-
-```python
-# RAG Settings
-CHUNK_SIZE = 800           # Characters per chunk
-CHUNK_OVERLAP = 200        # Overlap between chunks
-DENSE_TOP_K = 10          # Dense retrieval results
-SPARSE_TOP_K = 10         # Sparse retrieval results
-RERANK_TOP_K = 5          # Final results after reranking
-
-# Quality Thresholds
-CONFIDENCE_THRESHOLD = 0.7    # Minimum confidence
-ESCALATION_THRESHOLD = 0.5    # Escalate below this
-
-# Model Selection
-EMBEDDING_MODEL = "models/text-embedding-004"
-LLM_TIER_1 = "gemini-1.5-flash-002"  # Fast queries
-LLM_TIER_2 = "gemini-1.5-pro-002"    # Complex queries
+│   ├── knowledge_base/   # Markdown knowledge base
+│   └── indexes/          # FAISS and BM25 indexes
+└── scripts/
+    ├── index_knowledge_base.py
+    ├── test_quota.py     # Test API key quota
+    └── list_models.py    # List available models
 ```
 
 ## API Endpoints
 
+### Chat
+```bash
+POST /api/v1/chat
+{
+  "message": "How do I get started?",
+  "user_id": "user123",
+  "ticket_id": "optional"
+}
+```
+
 ### Health Check
 ```bash
 GET /api/v1/health
-```
-
-### Query Processing
-```bash
-POST /api/v1/query
-{
-  "query": "How do I reset my password?",
-  "user_id": "user123",
-  "ticket_id": "ticket456"
-}
 ```
 
 ### Metrics
@@ -232,89 +202,34 @@ POST /api/v1/query
 GET /api/v1/metrics
 ```
 
+## Quota Management Tips
+
+1. **Use Multiple API Keys**: Add 4 keys to `GOOGLE_API_KEYS_POOL` for automatic rotation
+2. **Simple Queries Are Free**: Greetings/farewells use zero API calls
+3. **Monitor Key Usage**: Check logs for `[KEY ROTATION]` messages
+4. **Consider Paid Tier**: Free tier has 20 requests/day per model limit
+
 ## Development
 
 ### Adding Knowledge Base Content
-
 1. Add markdown files to `data/knowledge_base/`
 2. Rebuild indexes: `python scripts/index_knowledge_base.py`
-3. Restart the application
+3. Restart the API server
 
-### Running Tests
+### Testing API Keys
 ```bash
-pytest tests/
+python scripts/test_quota.py
 ```
-
-### Code Quality
-```bash
-# Format code
-black src/
-
-# Lint
-flake8 src/
-
-# Type checking
-mypy src/
-```
-
-## Monitoring & Observability
-
-The system tracks:
-- **Response Quality**: Confidence scores, groundedness
-- **Performance**: Latency, cache hit rate, model usage
-- **Security**: PII detection rate, injection attempts
-- **User Behavior**: Intent distribution, escalation rate
-
-Access metrics at `/api/v1/metrics` or view in the UI sidebar.
-
-## Deployment
-
-### Production Considerations
-
-1. **Security**
-   - Set proper CORS origins in `src/api/main.py`
-   - Use environment variables for secrets
-   - Enable HTTPS/TLS
-
-2. **Performance**
-   - Use Redis for distributed caching
-   - Deploy with Gunicorn/Uvicorn workers
-   - Consider GPU for embeddings at scale
-
-3. **Monitoring**
-   - Integrate with Prometheus/Grafana
-   - Set up error tracking (Sentry)
-   - Enable structured logging
-
-### Docker Deployment
-```bash
-# Build image
-docker build -t ai-support-agent .
-
-# Run container
-docker run -p 8000:8000 -p 8501:8501 \
-  -e GOOGLE_API_KEY=your_key \
-  ai-support-agent
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Write/update tests
-5. Submit a pull request
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License
 
-## Acknowledgments
+## Built With
 
-Built with:
 - [LangGraph](https://github.com/langchain-ai/langgraph) - Multi-agent orchestration
 - [LangChain](https://github.com/langchain-ai/langchain) - RAG framework
 - [FastAPI](https://fastapi.tiangolo.com/) - API framework
-- [Streamlit](https://streamlit.io/) - UI framework
+- [Flask](https://flask.palletsprojects.com/) - Web UI framework
 - [FAISS](https://github.com/facebookresearch/faiss) - Vector search
 - [Google Gemini](https://ai.google.dev/) - LLM and embeddings
