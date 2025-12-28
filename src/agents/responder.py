@@ -140,7 +140,9 @@ Respond with ONLY a number between 0.0 and 1.0:"""
             ))
             
         except Exception as e:
-            print(f"Response generation failed: {e}")
+            import traceback
+            print(f"Response generation failed: {type(e).__name__}: {e}")
+            traceback.print_exc()
             state.response = "I apologize, but I'm having trouble processing your request. Let me connect you with a support specialist."
             state.confidence = 0.0
             state.should_escalate = True
