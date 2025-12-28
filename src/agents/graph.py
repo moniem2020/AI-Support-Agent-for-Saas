@@ -43,8 +43,8 @@ class SupportAgentGraph:
         
         # Add nodes
         workflow.add_node("security_check", self._security_check)
+        workflow.add_node("route", self._route)  # Route FIRST to detect simple intents
         workflow.add_node("cache_check", self._cache_check)
-        workflow.add_node("route", self._route)
         workflow.add_node("retrieve", self._retrieve)
         workflow.add_node("respond", self._respond)
         workflow.add_node("quality_check", self._quality_check)
@@ -54,13 +54,24 @@ class SupportAgentGraph:
         # Set entry point
         workflow.set_entry_point("security_check")
         
-        # Add edges
+        # Add edges - ROUTE FIRST to detect simple intents
         workflow.add_conditional_edges(
             "security_check",
             self._should_block,
             {
                 "block": END,
-                "continue": "cache_check"
+                "continue": "route"  # Go to route FIRST (not cache_check)
+            }
+        )
+        
+        # After routing, decide: simple intent -> respond directly, else -> cache/retrieve
+        workflow.add_conditional_edges(
+            "route",
+            self._route_decision,
+            {
+                "immediate_escalate": "escalate",
+                "direct_respond": "respond",  # Simple intents skip cache/retrieval entirely!
+                "retrieve": "cache_check"  # Complex queries go through cache/retrieval
             }
         )
         
@@ -69,20 +80,11 @@ class SupportAgentGraph:
             self._has_cache_hit,
             {
                 "hit": "finalize",
-                "miss": "route"
+                "miss": "retrieve"
             }
         )
         
-        workflow.add_conditional_edges(
-            "route",
-            self._route_decision,
-            {
-                "immediate_escalate": "escalate",
-                "retrieve": "retrieve"
-            }
-        )
-        
-        workflow.add_edge("retrieve", "respond")
+        workflow.add_edge("retrieve", "respond")  # After retrieval, go to respond
         
         workflow.add_conditional_edges(
             "respond",
@@ -210,12 +212,18 @@ class SupportAgentGraph:
         """Check if cache hit occurred."""
         return "hit" if state.cache_hit else "miss"
     
-    def _route_decision(self, state: AgentState) -> Literal["immediate_escalate", "retrieve"]:
+    def _route_decision(self, state: AgentState) -> Literal["immediate_escalate", "direct_respond", "retrieve"]:
         """Determine next step after routing."""
         if router_agent.should_escalate_immediately(state):
             state.should_escalate = True
             state.escalation_reason = "High urgency or negative sentiment detected"
             return "immediate_escalate"
+        
+        # Simple intents skip cache/retrieval entirely - NO API CALLS!
+        simple_intents = {"greeting", "farewell", "appreciation", "small_talk", "chitchat"}
+        if state.intent in simple_intents:
+            return "direct_respond"
+        
         return "retrieve"
     
     def _quality_decision(self, state: AgentState) -> Literal["good", "retry", "escalate"]:
