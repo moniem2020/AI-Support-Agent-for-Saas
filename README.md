@@ -221,6 +221,16 @@ GET /api/v1/metrics
 python scripts/test_quota.py
 ```
 
+## Contributing
+
+Contributions are very welcome! 🎉
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
 ## License
 
 MIT License
@@ -233,3 +243,7 @@ MIT License
 - [Flask](https://flask.palletsprojects.com/) - Web UI framework
 - [FAISS](https://github.com/facebookresearch/faiss) - Vector search
 - [Google Gemini](https://ai.google.dev/) - LLM and embeddings
+
+---
+
+<p align="center">Made with ❤️ by MG</p>
