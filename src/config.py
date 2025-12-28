@@ -19,9 +19,15 @@ INDEXES_DIR = DATA_DIR / "indexes"
 KNOWLEDGE_BASE_DIR.mkdir(parents=True, exist_ok=True)
 INDEXES_DIR.mkdir(parents=True, exist_ok=True)
 
-# Google API Keys (dual-key routing for quota management)
+# Google API Keys (multi-key rotation for quota management)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Main key for complex queries
 GOOGLE_API_KEY_FAST = os.getenv("GOOGLE_API_KEY_FAST", GOOGLE_API_KEY)  # Fast key for simple queries
+
+# API Key Pool for rotation when quota is exceeded (for complex queries)
+_api_keys_pool_str = os.getenv("GOOGLE_API_KEYS_POOL", GOOGLE_API_KEY or "")
+GOOGLE_API_KEYS_POOL = [k.strip() for k in _api_keys_pool_str.split(",") if k.strip()]
+if not GOOGLE_API_KEYS_POOL and GOOGLE_API_KEY:
+    GOOGLE_API_KEYS_POOL = [GOOGLE_API_KEY]
 
 # Model Configuration
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
