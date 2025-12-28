@@ -84,6 +84,32 @@ Respond with ONLY the JSON object:"""
         Returns:
             Updated state with routing information
         """
+        query_lower = state.current_query.lower().strip()
+        
+        # FAST PATH: Pattern-based greeting detection (no LLM needed!)
+        greeting_patterns = [
+            "hi", "hello", "hey", "greetings", "good morning", "good afternoon",
+            "good evening", "howdy", "sup", "what's up", "yo", "hiya", "hola"
+        ]
+        
+        # Check if query is a simple greeting
+        if query_lower in greeting_patterns or len(query_lower) <= 3:
+            state.intent = "greeting"
+            state.complexity = "simple"  # Use simple tier with fast API key
+            state.category = "general"
+            state.urgency = 0.1
+            state.sentiment = 0.8
+            return state
+        
+        # Check for very short queries (likely simple)
+        if len(query_lower.split()) <= 2:
+            state.intent = "question"
+            state.complexity = "simple"
+            state.category = "general"
+            state.urgency = 0.3
+            state.sentiment = 0.5
+            return state
+        
         # Build conversation history
         history = ""
         for msg in state.messages[:-1]:  # Exclude current query
@@ -92,7 +118,7 @@ Respond with ONLY the JSON object:"""
         if not history:
             history = "No previous conversation"
         
-        # Get classification
+        # Get classification via LLM for complex queries
         prompt = self.routing_prompt.format(
             query=state.current_query,
             history=history
@@ -104,15 +130,25 @@ Respond with ONLY the JSON object:"""
             
             # Update state
             state.intent = classification.get("intent", "question")
-            state.complexity = classification.get("complexity", "standard")
+            
+            # Map complexity to responder's expected values
+            raw_complexity = classification.get("complexity", "standard")
+            complexity_map = {
+                "simple": "simple",
+                "standard": "moderate",  # Map standard -> moderate
+                "complex": "complex",
+                "specialized": "complex"  # Map specialized -> complex
+            }
+            state.complexity = complexity_map.get(raw_complexity, "moderate")
+            
             state.category = classification.get("category", "general")
             state.urgency = float(classification.get("urgency", 0.5))
             state.sentiment = float(classification.get("sentiment", 0.5))
             
         except Exception as e:
             print(f"Routing failed: {e}")
-            # Use defaults on failure
-            state.complexity = "standard"
+            # Use moderate (not simple) to avoid quota issues on retries
+            state.complexity = "moderate"
             state.category = "general"
         
         return state
