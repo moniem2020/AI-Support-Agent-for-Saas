@@ -79,7 +79,7 @@ Provide a helpful response:"""
         self._create_models()
         return self.current_key_index != old_index  # True if we have more keys to try
     
-    def _invoke_with_rotation(self, model, prompt: str, tier: str, max_retries: int = 4):
+    def _invoke_with_rotation(self, model, prompt: str, tier: str, max_retries: int = None):
         """
         Invoke model with automatic key rotation on quota errors.
         
@@ -94,8 +94,9 @@ Provide a helpful response:"""
         """
         last_error = None
         keys_tried = 0
+        max_tries = max_retries or len(self.api_keys_pool)  # Try all keys by default
         
-        while keys_tried < min(max_retries, len(self.api_keys_pool)):
+        while keys_tried < max_tries:
             try:
                 # Get current model for this tier
                 current_model = self.models.get(tier, model)
