@@ -76,33 +76,145 @@ Respond with ONLY the JSON object:"""
     
     def route(self, state: AgentState) -> AgentState:
         """
-        Analyze and route the query.
+        Analyze and route the query using hybrid classification.
         
-        Args:
-            state: Current agent state
-            
-        Returns:
-            Updated state with routing information
+        Uses a combination of:
+        1. Pattern matching for greetings/small-talk/chitchat (instant, no LLM)
+        2. Heuristic scoring for product relevance detection
+        3. LLM classification only for complex product queries
+        
+        Based on research: keyword-based methods are effective for simple queries,
+        reducing LLM calls and improving response time.
         """
         query_lower = state.current_query.lower().strip()
+        query_words = set(query_lower.split())
         
-        # FAST PATH: Pattern-based greeting detection (no LLM needed!)
-        greeting_patterns = [
-            "hi", "hello", "hey", "greetings", "good morning", "good afternoon",
-            "good evening", "howdy", "sup", "what's up", "yo", "hiya", "hola"
-        ]
+        # ============================================================
+        # FAST PATH: Pattern-based classification (no LLM needed!)
+        # Based on best practices for handling simple/casual queries
+        # ============================================================
         
-        # Check if query is a simple greeting
-        if query_lower in greeting_patterns or len(query_lower) <= 3:
+        # 1. GREETINGS - Common salutations
+        greetings = {
+            "hi", "hello", "hey", "hiya", "howdy", "greetings", "yo", "sup",
+            "good morning", "good afternoon", "good evening", "good night",
+            "morning", "afternoon", "evening", "hola", "bonjour", "ciao",
+            "what's up", "whats up", "wassup", "wazzup", "g'day", "aloha"
+        }
+        
+        # 2. FAREWELLS - Closing/goodbye phrases
+        farewells = {
+            "bye", "goodbye", "farewell", "see you", "see ya", "later",
+            "take care", "have a nice day", "have a good one", "cya",
+            "thanks bye", "thank you bye", "ok bye", "gtg", "gotta go",
+            "talk later", "catch you later", "peace", "cheers"
+        }
+        
+        # 3. APPRECIATION - Thank you phrases
+        appreciation = {
+            "thanks", "thank you", "thx", "ty", "thank u", "appreciate it",
+            "thanks a lot", "thank you so much", "many thanks", "grateful",
+            "much appreciated", "thanks for your help", "thanks for helping"
+        }
+        
+        # 4. SMALL TALK - Casual conversation not about product
+        small_talk = {
+            "how are you", "how r u", "how are u", "hows it going",
+            "how's it going", "what's new", "whats new", "how do you do",
+            "nice to meet you", "pleasure", "how's your day", "hows your day",
+            "are you a bot", "are you real", "are you human", "who are you",
+            "what are you", "what's your name", "whats your name", "your name",
+            "who made you", "who created you", "are you ai", "are you chatgpt",
+            "can you help", "can you help me", "i need help", "help me",
+            "help please", "please help", "need assistance", "assist me"
+        }
+        
+        # 5. OFF-TOPIC / CHITCHAT - Non-product related
+        off_topic = {
+            "tell me a joke", "joke", "funny", "weather", "whats the weather",
+            "what time is it", "time", "date", "what day is it", "today",
+            "tell me something", "interesting", "fun fact", "bored", "boring",
+            "random", "anything", "whatever", "idk", "i dont know", "dunno",
+            "nothing", "nevermind", "nvm", "forget it", "ok", "okay", "k",
+            "cool", "nice", "great", "awesome", "sure", "alright", "fine",
+            "yes", "no", "yeah", "yep", "nope", "maybe", "perhaps", "lol",
+            "haha", "hehe", "lmao", "rofl", "omg", "wow", "hmm", "umm", "uh"
+        }
+        
+        # Check for exact matches or query contains the pattern
+        def matches_category(patterns: set) -> bool:
+            if query_lower in patterns:
+                return True
+            for pattern in patterns:
+                if pattern in query_lower:
+                    return True
+            return False
+        
+        # === GREETING DETECTION ===
+        if matches_category(greetings) or len(query_lower) <= 3:
             state.intent = "greeting"
-            state.complexity = "simple"  # Use simple tier with fast API key
+            state.complexity = "simple"
             state.category = "general"
             state.urgency = 0.1
             state.sentiment = 0.8
             return state
         
-        # Check for very short queries (likely simple)
-        if len(query_lower.split()) <= 2:
+        # === FAREWELL DETECTION ===
+        if matches_category(farewells):
+            state.intent = "farewell"
+            state.complexity = "simple"
+            state.category = "general"
+            state.urgency = 0.1
+            state.sentiment = 0.7
+            return state
+        
+        # === APPRECIATION DETECTION ===
+        if matches_category(appreciation):
+            state.intent = "appreciation"
+            state.complexity = "simple"
+            state.category = "general"
+            state.urgency = 0.1
+            state.sentiment = 0.9
+            return state
+        
+        # === SMALL TALK DETECTION ===
+        if matches_category(small_talk):
+            state.intent = "small_talk"
+            state.complexity = "simple"
+            state.category = "general"
+            state.urgency = 0.2
+            state.sentiment = 0.6
+            return state
+        
+        # === OFF-TOPIC / CHITCHAT DETECTION ===
+        if matches_category(off_topic) and len(query_words) <= 5:
+            state.intent = "chitchat"
+            state.complexity = "simple"
+            state.category = "general"
+            state.urgency = 0.1
+            state.sentiment = 0.5
+            return state
+        
+        # ============================================================
+        # HEURISTIC: Check if query seems product-related
+        # If very short and no product keywords, route to simple
+        # ============================================================
+        
+        product_keywords = {
+            "account", "billing", "subscription", "payment", "invoice", "plan",
+            "feature", "integration", "api", "setup", "configure", "settings",
+            "error", "issue", "problem", "bug", "broken", "not working", "fix",
+            "how to", "how do i", "can i", "is it possible", "tutorial", "guide",
+            "password", "login", "sign in", "sign up", "register", "upgrade",
+            "cancel", "refund", "pricing", "cost", "charge", "trial", "demo",
+            "workspace", "project", "task", "team", "member", "admin", "user",
+            "notification", "email", "sync", "export", "import", "data", "backup"
+        }
+        
+        has_product_keyword = any(kw in query_lower for kw in product_keywords)
+        
+        # Short queries without product keywords = simple
+        if len(query_words) <= 4 and not has_product_keyword:
             state.intent = "question"
             state.complexity = "simple"
             state.category = "general"
