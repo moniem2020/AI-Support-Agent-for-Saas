@@ -24,9 +24,9 @@ class DenseRetriever:
         self.vector_store: Optional[FAISS] = None
         
         # Try to load existing index
-        self._load_index()
+        self.load_index()
     
-    def _load_index(self) -> bool:
+    def load_index(self) -> bool:
         """Load existing FAISS index if available."""
         if self.index_path.exists():
             try:
