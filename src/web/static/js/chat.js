@@ -11,6 +11,46 @@ const sendButton = document.getElementById('sendButton');
 
 // State
 let isWaitingForResponse = false;
+let chatHistory = []; // Store messages for persistence
+
+// LocalStorage key for chat history
+const CHAT_STORAGE_KEY = 'protaskflow_chat_history';
+
+/**
+ * Save chat history to localStorage
+ */
+function saveChat() {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory));
+}
+
+/**
+ * Load chat history from localStorage
+ */
+function loadChat() {
+    const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+    if (saved) {
+        try {
+            chatHistory = JSON.parse(saved);
+            chatHistory.forEach(msg => {
+                addMessageToDOM(msg.text, msg.role, msg.options || {}, msg.time);
+            });
+        } catch (e) {
+            console.error('Failed to load chat history:', e);
+            chatHistory = [];
+        }
+    }
+}
+
+/**
+ * Clear chat history
+ */
+function clearChat() {
+    chatHistory = [];
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+    // Remove all messages except the welcome message
+    const messages = chatMessages.querySelectorAll('.message');
+    messages.forEach(msg => msg.remove());
+}
 
 /**
  * Initialize chat functionality
@@ -36,6 +76,9 @@ function init() {
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('theme', next);
     });
+
+    // Load saved chat history
+    loadChat();
 
     // Focus input on load
     messageInput.focus();
@@ -105,14 +148,31 @@ async function sendMessage() {
 }
 
 /**
- * Add a message to the chat
+ * Add a message to the chat (saves to history + renders)
  */
 function addMessage(text, role, options = {}) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Save to history for persistence
+    chatHistory.push({ text, role, options, time: timeStr });
+    saveChat();
+
+    // Render to DOM
+    addMessageToDOM(text, role, options, timeStr);
+}
+
+/**
+ * Add a message to DOM only (used for loading saved messages)
+ */
+function addMessageToDOM(text, role, options = {}, timeStr = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
 
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (!timeStr) {
+        const now = new Date();
+        timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
 
     // Avatar SVG
     const avatarSvg = role === 'user'
