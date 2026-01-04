@@ -198,17 +198,24 @@ def prepare_escalation(state: AgentState) -> AgentState:
     handoff = escalation_handler.prepare_handoff(state)
     ticket_id = escalation_handler.queue_escalation(handoff)
     
-    # Update response to inform user
-    state.response = f"""I apologize, but I wasn't able to fully resolve your question. 
+    # Check if user explicitly requested human agent
+    human_keywords = ["speak to human", "talk to agent", "real person", "human support", 
+                      "escalate", "talk to cs", "speak to cs", "human agent", "customer service",
+                      "let me talk", "want to talk", "need to talk", "connect me"]
+    user_requested_human = any(kw in state.current_query.lower() for kw in human_keywords)
     
-I've escalated this to our support team and they'll follow up with you shortly.
+    # Contextual response based on escalation reason
+    if user_requested_human:
+        intro = "Absolutely! I'm connecting you with a member of our support team."
+    else:
+        intro = "I want to make sure you get the best help possible, so I'm connecting you with our support team."
+    
+    # Update response to inform user
+    state.response = f"""{intro}
 
 **Ticket ID**: {ticket_id}
 **Priority**: {handoff['priority'].capitalize()}
 
-In the meantime, here's what I found that might help:
-{state.response if state.response else 'No relevant information found.'}
-
-Our team will reach out to you soon. Is there anything else I can help with?"""
+A support agent will follow up with you shortly. Is there anything else I can help with in the meantime?"""
     
     return state
