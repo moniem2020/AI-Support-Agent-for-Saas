@@ -11,6 +11,7 @@ class ChatRequest(BaseModel):
     """Chat request from user."""
     message: str = Field(..., min_length=1, max_length=5000, description="User message")
     user_id: Optional[str] = Field(None, description="Optional user identifier")
+    session_id: Optional[str] = Field(None, description="Chat session ID for grouping messages")
     ticket_id: Optional[str] = Field(None, description="Optional ticket identifier")
     conversation_id: Optional[str] = Field(None, description="Optional conversation ID for context")
 

@@ -12,11 +12,20 @@ const sendButton = document.getElementById('sendButton');
 // State
 let isWaitingForResponse = false;
 let chatHistory = []; // Store messages for persistence
+let sessionId = null; // Current chat session ID
 
 // LocalStorage keys
 const CHAT_STORAGE_KEY = 'protaskflow_chat_history';
 const CHAT_TIMESTAMP_KEY = 'protaskflow_chat_timestamp';
+const CHAT_SESSION_KEY = 'protaskflow_session_id';
 const CHAT_EXPIRY_HOURS = 24; // Auto-expire after 24 hours
+
+/**
+ * Generate a unique session ID
+ */
+function generateSessionId() {
+    return 'sess_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
 
 /**
  * Save chat history to localStorage with timestamp
@@ -24,6 +33,9 @@ const CHAT_EXPIRY_HOURS = 24; // Auto-expire after 24 hours
 function saveChat() {
     localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory));
     localStorage.setItem(CHAT_TIMESTAMP_KEY, Date.now().toString());
+    if (sessionId) {
+        localStorage.setItem(CHAT_SESSION_KEY, sessionId);
+    }
 }
 
 /**
@@ -49,6 +61,13 @@ function loadChat() {
         return;
     }
 
+    // Load session ID
+    sessionId = localStorage.getItem(CHAT_SESSION_KEY);
+    if (!sessionId) {
+        sessionId = generateSessionId();
+        localStorage.setItem(CHAT_SESSION_KEY, sessionId);
+    }
+
     const saved = localStorage.getItem(CHAT_STORAGE_KEY);
     if (saved) {
         try {
@@ -68,8 +87,10 @@ function loadChat() {
  */
 function clearChat() {
     chatHistory = [];
+    sessionId = generateSessionId(); // New session!
     localStorage.removeItem(CHAT_STORAGE_KEY);
     localStorage.removeItem(CHAT_TIMESTAMP_KEY);
+    localStorage.setItem(CHAT_SESSION_KEY, sessionId);
 
     // Remove all messages from DOM
     const messages = chatMessages.querySelectorAll('.message');
@@ -163,6 +184,7 @@ async function sendMessage() {
             body: JSON.stringify({
                 message: message,
                 user_id: 'web_user',
+                session_id: sessionId,
                 ticket_id: null
             })
         });
