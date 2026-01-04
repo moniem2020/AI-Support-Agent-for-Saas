@@ -187,17 +187,11 @@ function addMessageToDOM(text, role, options = {}, timeStr = null) {
                <line x1="15" y1="9" x2="15.01" y2="9"/>
            </svg>`;
 
-    // Build sources HTML if available
+    // Sources are NOT displayed to users - kept in backend for:
+    // - Developer debugging
+    // - CS agent visibility on escalation
+    // - Service improvement analytics
     let sourcesHtml = '';
-    if (options.sources && options.sources.length > 0) {
-        const sourceTags = options.sources.map(s => `<span class="source-tag">${s}</span>`).join('');
-        sourcesHtml = `
-            <div class="message-sources">
-                <div class="sources-label">Sources</div>
-                <div class="sources-list">${sourceTags}</div>
-            </div>
-        `;
-    }
 
     // Format text with line breaks
     const formattedText = text.split('\n').map(line => `<p>${line}</p>`).join('');
