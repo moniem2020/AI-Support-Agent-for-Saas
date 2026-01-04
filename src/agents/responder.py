@@ -45,7 +45,7 @@ RULES:
 5. Include specific steps if applicable
 6. Cite sources when referencing specific information
 7. DO NOT use markdown formatting (no **, *, [], links, etc.) - respond in plain text only
-8. DO NOT start with greetings like "Hello!", "Hi there!", "Hey!" if the previous conversation already has a greeting - just answer the question directly
+8. NEVER start with greetings like "Hello!", "Hi there!", "Hey!" - just answer the question directly
 
 Category: {category}
 
