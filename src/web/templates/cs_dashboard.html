@@ -368,6 +368,15 @@
             </div>
 
             <div class="ticket-detail">
+                <label>Reply to Customer</label>
+                <textarea class="notes-input" id="replyInput" placeholder="Type a reply to the customer..."
+                    rows="3"></textarea>
+                <div style="text-align: right; margin-top: 0.5rem;">
+                    <button class="btn btn-primary" onclick="sendReply()">Send Reply</button>
+                </div>
+            </div>
+
+            <div class="ticket-detail">
                 <label>Update Status</label>
                 <select class="status-select" id="statusSelect">
                     <option value="pending_review">Pending Review</option>

@@ -74,6 +74,7 @@ def chat():
             json={
                 "message": data.get("message", ""),
                 "user_id": data.get("user_id", "web_user"),
+                "session_id": data.get("session_id"),
                 "ticket_id": data.get("ticket_id")
             },
             timeout=30
@@ -128,6 +129,20 @@ def update_ticket_status(ticket_id):
     try:
         response = requests.put(
             f"{API_BASE_URL}/tickets/{ticket_id}/status",
+            json=request.json,
+            timeout=10
+        )
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/v1/tickets/<ticket_id>/reply', methods=['POST'])
+def reply_ticket(ticket_id):
+    """Proxy ticket reply."""
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/tickets/{ticket_id}/reply",
             json=request.json,
             timeout=10
         )

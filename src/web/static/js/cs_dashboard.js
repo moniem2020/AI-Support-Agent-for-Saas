@@ -171,6 +171,37 @@ async function openTicket(ticketId) {
 
         // Render ticket details
         const details = document.getElementById('ticketDetails');
+
+        // Render Messages History if available
+        let historyHtml = '';
+        if (ticket.messages && ticket.messages.length > 0) {
+            historyHtml = `
+            <div class="ticket-detail">
+                <label>Conversation History</label>
+                <div class="chat-history" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;">
+                    ${ticket.messages.map(msg => `
+                        <div class="chat-message ${msg.role}" style="align-self: ${msg.role === 'user' ? 'flex-start' : 'flex-end'}; max-width: 80%;">
+                            <div class="msg-bubble" style="background: ${msg.role === 'user' ? 'var(--bg-secondary)' : 'var(--accent-primary)'}; color: ${msg.role === 'user' ? 'var(--text-primary)' : 'white'}; padding: 0.5rem 1rem; border-radius: 12px; font-size: 0.9rem;">
+                                <strong>${msg.role === 'user' ? 'User' : (msg.role === 'agent' ? 'Agent' : 'AI')}:</strong> ${escapeHtml(msg.content)}
+                            </div>
+                            <div class="msg-time" style="font-size: 0.7rem; color: var(--text-tertiary); margin-top: 0.2rem;">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+        } else {
+            // Fallback to legacy
+            historyHtml = `
+            <div class="ticket-detail">
+                <label>Full Query</label>
+                <div class="ticket-detail-value">${escapeHtml(ticket.query)}</div>
+            </div>
+            <div class="ticket-detail">
+                <label>AI Response</label>
+                <div class="ticket-detail-value">${escapeHtml(ticket.response)}</div>
+            </div>`;
+        }
+
         details.innerHTML = `
             <div class="ticket-detail">
                 <label>Ticket ID</label>
@@ -192,14 +223,9 @@ async function openTicket(ticketId) {
                 <label>User</label>
                 <div class="ticket-detail-value">${ticket.user_id}</div>
             </div>
-            <div class="ticket-detail">
-                <label>Full Query</label>
-                <div class="ticket-detail-value">${escapeHtml(ticket.query)}</div>
-            </div>
-            <div class="ticket-detail">
-                <label>AI Response</label>
-                <div class="ticket-detail-value">${escapeHtml(ticket.response)}</div>
-            </div>
+            
+            ${historyHtml}
+            
             ${ticket.sources && ticket.sources.length > 0 ? `
             <div class="ticket-detail">
                 <label>Knowledge Base Sources Used</label>
@@ -241,9 +267,18 @@ async function openTicket(ticketId) {
         // Set current status in dropdown
         document.getElementById('statusSelect').value = ticket.status;
         document.getElementById('notesInput').value = ticket.notes || '';
+        if (document.getElementById('replyInput')) {
+            document.getElementById('replyInput').value = '';
+        }
 
         // Show modal
         document.getElementById('ticketModal').classList.add('active');
+
+        // Scroll chat to bottom
+        const chatHistory = details.querySelector('.chat-history');
+        if (chatHistory) {
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
 
         // Refresh tickets (to update read status)
         loadTickets();
@@ -291,6 +326,38 @@ async function updateTicket() {
     } catch (error) {
         console.error('Failed to update ticket:', error);
         alert('Failed to update ticket');
+    }
+}
+
+/**
+ * Send reply to customer
+ */
+async function sendReply() {
+    if (!currentTicketId) return;
+
+    const message = document.getElementById('replyInput').value.trim();
+    if (!message) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/tickets/${currentTicketId}/reply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: message,
+                agent_id: 'cs_agent'
+            })
+        });
+
+        if (response.ok) {
+            // Refresh ticket details to show new message
+            openTicket(currentTicketId);
+        } else {
+            alert('Failed to send reply');
+        }
+
+    } catch (e) {
+        console.error('Error sending reply:', e);
+        alert('Failed to send reply');
     }
 }
 

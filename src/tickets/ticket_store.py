@@ -47,6 +47,9 @@ class Ticket(BaseModel):
     read: bool = False
     notes: str = ""
     updated_at: Optional[str] = None
+    
+    # Conversation history
+    messages: List[Dict[str, Any]] = []  # List of {role, content, timestamp}
 
 
 class TicketStore:
@@ -105,6 +108,14 @@ class TicketStore:
         else:
             status = TicketStatus.PENDING_REVIEW
         
+        timestamp = datetime.now().isoformat()
+        
+        # Initial messages log
+        messages = [
+            {"role": "user", "content": query, "timestamp": timestamp},
+            {"role": "assistant", "content": response, "timestamp": timestamp}
+        ]
+        
         ticket = Ticket(
             id=ticket_id,
             user_id=user_id,
@@ -113,14 +124,15 @@ class TicketStore:
             category=category,
             query=query,
             response=response,
-            created_at=datetime.now().isoformat(),
+            created_at=timestamp,
             ai_resolved=ai_resolved,
             needs_escalation=needs_escalation,
             escalation_reason=escalation_reason,
             confidence=confidence,
             sources=sources or [],
             intent=intent,
-            status=status
+            status=status,
+            messages=messages
         )
         
         self.tickets[ticket_id] = ticket
@@ -155,10 +167,11 @@ class TicketStore:
     ) -> Ticket:
         """Create new ticket or update existing one for session."""
         existing = self.get_by_session(session_id)
+        timestamp = datetime.now().isoformat()
         
         if existing and existing.status != TicketStatus.CLOSED:
             # Update existing ticket
-            existing.updated_at = datetime.now().isoformat()
+            existing.updated_at = timestamp
             
             # Update status logic - if ANY message in session needs escalation, ticket needs escalation
             if needs_escalation:
@@ -170,6 +183,18 @@ class TicketStore:
             # Append new interaction to query/response (simplified log)
             existing.query += f"\n\n[User]: {query}"
             existing.response += f"\n\n[AI]: {response}"
+            
+            # Append to structured history
+            existing.messages.append({
+                "role": "user",
+                "content": query,
+                "timestamp": timestamp
+            })
+            existing.messages.append({
+                "role": "assistant",
+                "content": response,
+                "timestamp": timestamp
+            })
             
             # Update metadata if not set
             if not existing.category and category:
@@ -194,6 +219,36 @@ class TicketStore:
             intent=intent,
             session_id=session_id
         )
+
+    def add_message(
+        self,
+        ticket_id: str,
+        role: str,
+        content: str
+    ) -> Optional[Ticket]:
+        """Add a single message to ticket history (e.g. from CS agent)."""
+        ticket = self.get(ticket_id)
+        if not ticket:
+            return None
+        
+        timestamp = datetime.now().isoformat()
+        
+        # Append to structured logs
+        ticket.messages.append({
+            "role": role,
+            "content": content,
+            "timestamp": timestamp
+        })
+        
+        # Also update response/query strings for summary view legacy
+        if role == "assistant" or role == "agent":
+            ticket.response += f"\n\n[{role.upper()}]: {content}"
+        elif role == "user":
+            ticket.query += f"\n\n[USER]: {content}"
+            
+        ticket.updated_at = timestamp
+        self._save()
+        return ticket
 
     def get(self, ticket_id: str) -> Optional[Ticket]:
         """Get a ticket by ID."""

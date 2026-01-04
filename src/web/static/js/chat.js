@@ -13,11 +13,13 @@ const sendButton = document.getElementById('sendButton');
 let isWaitingForResponse = false;
 let chatHistory = []; // Store messages for persistence
 let sessionId = null; // Current chat session ID
+let currentTicketId = null; // Current support ticket ID
 
 // LocalStorage keys
 const CHAT_STORAGE_KEY = 'protaskflow_chat_history';
 const CHAT_TIMESTAMP_KEY = 'protaskflow_chat_timestamp';
 const CHAT_SESSION_KEY = 'protaskflow_session_id';
+const TICKET_ID_KEY = 'protaskflow_ticket_id';
 const CHAT_EXPIRY_HOURS = 24; // Auto-expire after 24 hours
 
 /**
@@ -68,6 +70,9 @@ function loadChat() {
         localStorage.setItem(CHAT_SESSION_KEY, sessionId);
     }
 
+    // Load ticket ID
+    currentTicketId = localStorage.getItem(TICKET_ID_KEY);
+
     const saved = localStorage.getItem(CHAT_STORAGE_KEY);
     if (saved) {
         try {
@@ -88,9 +93,12 @@ function loadChat() {
 function clearChat() {
     chatHistory = [];
     sessionId = generateSessionId(); // New session!
+    currentTicketId = null;
+
     localStorage.removeItem(CHAT_STORAGE_KEY);
     localStorage.removeItem(CHAT_TIMESTAMP_KEY);
     localStorage.setItem(CHAT_SESSION_KEY, sessionId);
+    localStorage.removeItem(TICKET_ID_KEY);
 
     // Remove all messages from DOM
     const messages = chatMessages.querySelectorAll('.message');
@@ -191,6 +199,12 @@ async function sendMessage() {
 
         const data = await response.json();
 
+        // Save ticket ID if present
+        if (data.ticket_id) {
+            currentTicketId = data.ticket_id;
+            localStorage.setItem(TICKET_ID_KEY, currentTicketId);
+        }
+
         // Hide typing indicator
         hideTyping();
 
@@ -275,7 +289,7 @@ function addMessageToDOM(text, role, options = {}, timeStr = null) {
         </div>
         <div class="message-content">
             <div class="message-header">
-                <span class="message-author">${role === 'user' ? 'You' : 'AI Assistant'}</span>
+                <span class="message-author">${role === 'user' ? 'You' : (options.isAgent ? 'Support Agent' : 'AI Assistant')}</span>
                 <span class="message-time">${timeStr}</span>
             </div>
             <div class="message-text ${options.isError ? 'error' : ''}">
@@ -379,6 +393,37 @@ function scrollToBottom() {
     const chatContainer = document.querySelector('.chat-container');
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
+
+// Poll for agent replies
+setInterval(async () => {
+    if (!currentTicketId) return;
+
+    try {
+        const response = await fetch(`/api/v1/tickets/${currentTicketId}`);
+        if (!response.ok) return;
+
+        const ticket = await response.json();
+        if (ticket && ticket.messages) {
+            ticket.messages.forEach(msg => {
+                // Check for agent messages (role='agent')
+                if (msg.role === 'agent') {
+                    // Check if we already have this message
+                    const exists = chatHistory.some(m => m.text === msg.content);
+
+                    if (!exists) {
+                        addMessage(msg.content, 'assistant', {
+                            isAgent: true
+                        });
+
+                        // Optional notification sound could go here
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        // Silent fail
+    }
+}, 5000);
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', init);
