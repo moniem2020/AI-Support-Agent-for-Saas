@@ -2,7 +2,8 @@
 Flask Web Application - Professional AI Support Chat Interface
 Styled like modern YC AI startups (Linear, Vercel, Anthropic)
 """
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response
+from functools import wraps
 import requests
 import os
 
@@ -13,6 +14,35 @@ app = Flask(__name__,
 # API Backend URL
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000/api/v1")
 
+# CS Dashboard Credentials (from environment variables)
+CS_USERNAME = os.getenv("CS_USERNAME", "admin")
+CS_PASSWORD = os.getenv("CS_PASSWORD", "support123")
+
+
+def check_auth(username, password):
+    """Check if username/password match."""
+    return username == CS_USERNAME and password == CS_PASSWORD
+
+
+def authenticate():
+    """Send 401 response to trigger Basic Auth."""
+    return Response(
+        'Access denied. Please provide valid credentials.',
+        401,
+        {'WWW-Authenticate': 'Basic realm="CS Dashboard"'}
+    )
+
+
+def requires_auth(f):
+    """Decorator for routes requiring authentication."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
 
 @app.route('/')
 def index():
@@ -21,8 +51,9 @@ def index():
 
 
 @app.route('/cs')
+@requires_auth
 def cs_dashboard():
-    """Render the CS agent dashboard."""
+    """Render the CS agent dashboard (requires authentication)."""
     return render_template('cs_dashboard.html')
 
 
