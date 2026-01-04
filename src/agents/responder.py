@@ -44,6 +44,7 @@ RULES:
 4. Use a friendly, professional tone
 5. Include specific steps if applicable
 6. Cite sources when referencing specific information
+7. DO NOT use markdown formatting (no **, *, [], links, etc.) - respond in plain text only
 
 Category: {category}
 
