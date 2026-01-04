@@ -48,7 +48,8 @@ async def chat(request: ChatRequest) -> ChatResponse:
             ai_resolved=not result["escalated"],
             needs_escalation=result["escalated"],
             escalation_reason=result.get("escalation_reason", ""),
-            confidence=result["confidence"]
+            confidence=result["confidence"],
+            sources=result.get("sources", [])
         )
         
         return ChatResponse(

@@ -186,6 +186,14 @@ async function openTicket(ticketId) {
                 <label>AI Response</label>
                 <div class="ticket-detail-value">${escapeHtml(ticket.response)}</div>
             </div>
+            ${ticket.sources && ticket.sources.length > 0 ? `
+            <div class="ticket-detail">
+                <label>Knowledge Base Sources Used</label>
+                <div class="ticket-detail-value">
+                    ${ticket.sources.map(s => `<span class="source-tag">${escapeHtml(s)}</span>`).join(' ')}
+                </div>
+            </div>
+            ` : ''}
             <div class="ticket-detail">
                 <label>Status</label>
                 <div class="ticket-detail-value">

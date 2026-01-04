@@ -33,6 +33,7 @@ class Ticket(BaseModel):
     needs_escalation: bool = False
     escalation_reason: str = ""
     confidence: float = 0.0
+    sources: List[str] = []  # Knowledge base sources used by AI
     
     # Status tracking
     status: TicketStatus = TicketStatus.PENDING_REVIEW
@@ -82,7 +83,8 @@ class TicketStore:
         ai_resolved: bool,
         needs_escalation: bool,
         escalation_reason: str = "",
-        confidence: float = 0.0
+        confidence: float = 0.0,
+        sources: List[str] = None
     ) -> Ticket:
         """Create a new ticket."""
         ticket_id = str(uuid.uuid4())[:8]
@@ -103,6 +105,7 @@ class TicketStore:
             needs_escalation=needs_escalation,
             escalation_reason=escalation_reason,
             confidence=confidence,
+            sources=sources or [],
             status=status
         )
         
