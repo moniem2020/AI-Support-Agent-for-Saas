@@ -49,7 +49,9 @@ async def chat(request: ChatRequest) -> ChatResponse:
             needs_escalation=result["escalated"],
             escalation_reason=result.get("escalation_reason", ""),
             confidence=result["confidence"],
-            sources=result.get("sources", [])
+            sources=result.get("sources", []),
+            category=result.get("category", ""),
+            intent=result.get("intent", "")
         )
         
         return ChatResponse(

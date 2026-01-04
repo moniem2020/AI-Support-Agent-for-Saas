@@ -24,6 +24,8 @@ class Ticket(BaseModel):
     """Customer support ticket."""
     id: str
     user_id: str
+    subject: str = ""  # Brief summary of what ticket is about
+    category: str = ""  # E.g., billing, features, troubleshooting
     query: str
     response: str
     created_at: str
@@ -34,6 +36,7 @@ class Ticket(BaseModel):
     escalation_reason: str = ""
     confidence: float = 0.0
     sources: List[str] = []  # Knowledge base sources used by AI
+    intent: str = ""  # greeting, question, complaint, etc.
     
     # Status tracking
     status: TicketStatus = TicketStatus.PENDING_REVIEW
@@ -84,10 +87,15 @@ class TicketStore:
         needs_escalation: bool,
         escalation_reason: str = "",
         confidence: float = 0.0,
-        sources: List[str] = None
+        sources: List[str] = None,
+        category: str = "",
+        intent: str = ""
     ) -> Ticket:
         """Create a new ticket."""
         ticket_id = str(uuid.uuid4())[:8]
+        
+        # Generate subject from query (first 60 chars)
+        subject = query[:60] + "..." if len(query) > 60 else query
         
         # Determine initial status
         if ai_resolved and not needs_escalation:
@@ -98,6 +106,8 @@ class TicketStore:
         ticket = Ticket(
             id=ticket_id,
             user_id=user_id,
+            subject=subject,
+            category=category,
             query=query,
             response=response,
             created_at=datetime.now().isoformat(),
@@ -106,6 +116,7 @@ class TicketStore:
             escalation_reason=escalation_reason,
             confidence=confidence,
             sources=sources or [],
+            intent=intent,
             status=status
         )
         

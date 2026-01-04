@@ -128,12 +128,14 @@ function renderTickets(tickets) {
     tbody.innerHTML = tickets.map(ticket => {
         const time = new Date(ticket.created_at).toLocaleString();
         const unreadClass = !ticket.read && ticket.needs_escalation ? 'unread' : '';
+        const subject = ticket.subject || ticket.query.substring(0, 50) + '...';
+        const category = ticket.category || '-';
 
         return `
             <tr class="${unreadClass}" onclick="openTicket('${ticket.id}')">
                 <td><strong>#${ticket.id}</strong></td>
-                <td>${ticket.user_id}</td>
-                <td class="query-preview">${escapeHtml(ticket.query)}</td>
+                <td class="query-preview">${escapeHtml(subject)}</td>
+                <td>${category}</td>
                 <td><span class="status-badge status-${ticket.status}">${formatStatus(ticket.status)}</span></td>
                 <td>${(ticket.confidence * 100).toFixed(0)}%</td>
                 <td>${ticket.assigned_to || '-'}</td>
@@ -175,11 +177,23 @@ async function openTicket(ticketId) {
                 <div class="ticket-detail-value">#${ticket.id}</div>
             </div>
             <div class="ticket-detail">
+                <label>Subject</label>
+                <div class="ticket-detail-value"><strong>${escapeHtml(ticket.subject || ticket.query.substring(0, 60))}</strong></div>
+            </div>
+            <div class="ticket-detail">
+                <label>Category</label>
+                <div class="ticket-detail-value">${ticket.category || '-'}</div>
+            </div>
+            <div class="ticket-detail">
+                <label>Intent</label>
+                <div class="ticket-detail-value">${ticket.intent || '-'}</div>
+            </div>
+            <div class="ticket-detail">
                 <label>User</label>
                 <div class="ticket-detail-value">${ticket.user_id}</div>
             </div>
             <div class="ticket-detail">
-                <label>Query</label>
+                <label>Full Query</label>
                 <div class="ticket-detail-value">${escapeHtml(ticket.query)}</div>
             </div>
             <div class="ticket-detail">
