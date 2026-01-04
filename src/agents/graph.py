@@ -239,13 +239,13 @@ class SupportAgentGraph:
         if state.confidence >= CONFIDENCE_THRESHOLD:
             return "good"
         
-        # REMOVED: Retry logic was causing infinite loops because routing functions
-        # can't persist state changes (retry_count += 1 didn't work)
-        # Low confidence responses go to escalate instead of infinite retry
-        if state.confidence > 0.3:
-            return "good"  # Accept moderate confidence responses
-        
-        return "escalate"
+        # Check against configured escalation threshold
+        if state.confidence < ESCALATION_THRESHOLD:
+            return "escalate"
+            
+        # Between Threshold and 0.7: Moderate confidence
+        # We can either accept it or retry. For now, accept it.
+        return "good"
     
     def _final_decision(self, state: AgentState) -> Literal["complete", "escalate"]:
         """Final quality gate."""
