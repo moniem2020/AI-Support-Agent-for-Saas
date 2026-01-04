@@ -244,8 +244,8 @@ function addMessageToDOM(text, role, options = {}, timeStr = null) {
     // - Service improvement analytics
     let sourcesHtml = '';
 
-    // Format text with line breaks
-    const formattedText = text.split('\n').map(line => `<p>${line}</p>`).join('');
+    // Parse markdown and format text
+    const formattedText = parseMarkdown(text);
 
     messageDiv.innerHTML = `
         <div class="message-avatar">
@@ -265,6 +265,74 @@ function addMessageToDOM(text, role, options = {}, timeStr = null) {
 
     chatMessages.appendChild(messageDiv);
     scrollToBottom();
+}
+
+/**
+ * Parse simple markdown to HTML
+ */
+function parseMarkdown(text) {
+    if (!text) return '';
+
+    // Split into lines
+    let lines = text.split('\n');
+    let html = [];
+    let inList = false;
+    let listType = null; // 'ol' or 'ul'
+
+    for (let line of lines) {
+        // Check for numbered list (1., 2., etc)
+        const numberedMatch = line.match(/^(\d+)\.\s+(.+)$/);
+        // Check for bullet list (- or •)
+        const bulletMatch = line.match(/^[-•]\s+(.+)$/);
+
+        if (numberedMatch) {
+            if (!inList || listType !== 'ol') {
+                if (inList) html.push(`</${listType}>`);
+                html.push('<ol>');
+                inList = true;
+                listType = 'ol';
+            }
+            let content = numberedMatch[2];
+            content = parseBold(content);
+            html.push(`<li>${content}</li>`);
+        } else if (bulletMatch) {
+            if (!inList || listType !== 'ul') {
+                if (inList) html.push(`</${listType}>`);
+                html.push('<ul>');
+                inList = true;
+                listType = 'ul';
+            }
+            let content = bulletMatch[1];
+            content = parseBold(content);
+            html.push(`<li>${content}</li>`);
+        } else {
+            // Close any open list
+            if (inList) {
+                html.push(`</${listType}>`);
+                inList = false;
+                listType = null;
+            }
+            // Regular paragraph
+            if (line.trim()) {
+                let content = parseBold(line);
+                html.push(`<p>${content}</p>`);
+            }
+        }
+    }
+
+    // Close any remaining list
+    if (inList) {
+        html.push(`</${listType}>`);
+    }
+
+    return html.join('');
+}
+
+/**
+ * Parse bold markdown (**text**) to <strong>
+ */
+function parseBold(text) {
+    return text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 }
 
 /**
