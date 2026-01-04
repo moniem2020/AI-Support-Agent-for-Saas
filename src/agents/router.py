@@ -118,15 +118,14 @@ Respond with ONLY the JSON object:"""
         }
         
         # 4. SMALL TALK - Casual conversation not about product
+        # NOTE: Do NOT include "help" phrases here - they should go to LLM
         small_talk = {
             "how are you", "how r u", "how are u", "hows it going",
             "how's it going", "what's new", "whats new", "how do you do",
             "nice to meet you", "pleasure", "how's your day", "hows your day",
             "are you a bot", "are you real", "are you human", "who are you",
             "what are you", "what's your name", "whats your name", "your name",
-            "who made you", "who created you", "are you ai", "are you chatgpt",
-            "can you help", "can you help me", "i need help", "help me",
-            "help please", "please help", "need assistance", "assist me"
+            "who made you", "who created you", "are you ai", "are you chatgpt"
         }
         
         # 5. OFF-TOPIC / CHITCHAT - Non-product related
