@@ -141,14 +141,20 @@ Respond with ONLY the JSON object:"""
         }
         
         # Check for exact matches or query contains the pattern
-        # Use word boundary checking to avoid false matches (e.g., 'yo' in 'you')
+        # Use word boundary checking to avoid false matches (e.g., 'what are you' in 'what are your')
         def matches_category(patterns: set) -> bool:
             if query_lower in patterns:
                 return True
-            # For multi-word patterns, check if they appear in the query
+            # For multi-word patterns, check if they appear as complete phrases
+            # (not as part of longer words)
+            import re
             for pattern in patterns:
-                if ' ' in pattern and pattern in query_lower:
-                    return True
+                if ' ' in pattern:
+                    # Use word boundary regex to avoid partial matches
+                    # e.g., "what are you" should NOT match "what are your pricings"
+                    pattern_regex = r'\b' + re.escape(pattern) + r'\b'
+                    if re.search(pattern_regex, query_lower):
+                        return True
             return False
         
         def matches_category_loose(patterns: set) -> bool:
