@@ -42,14 +42,14 @@ LLM_TIER_2 = "gemini-2.5-flash"    # Complex queries
 # Model routing map - all use same model for consistency
 MODEL_ROUTING = {
     "simple": LLM_TIER_FAST,
-    "moderate": LLM_TIER_1,
+    "standard": LLM_TIER_1,
     "complex": LLM_TIER_2,
 }
 
 # API key routing - ALL tiers now use rotation pool ("pool")
 API_KEY_ROUTING = {
     "simple": "pool",     # Use key rotation pool
-    "moderate": "pool",   # Use key rotation pool
+    "standard": "pool",   # Use key rotation pool
     "complex": "pool",    # Use key rotation pool
 }
 

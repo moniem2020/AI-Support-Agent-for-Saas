@@ -257,7 +257,7 @@ Respond with ONLY the JSON object:"""
         # If query starts with common question pattern, skip LLM classification
         if any(query_lower.startswith(p) or p in query_lower for p in common_question_patterns):
             state.intent = "question"
-            state.complexity = "moderate"  # Moderate to trigger retrieval
+            state.complexity = "standard"  # Moderate to trigger retrieval
             state.category = "support"
             state.urgency = 0.4
             state.sentiment = 0.5
@@ -288,11 +288,11 @@ Respond with ONLY the JSON object:"""
             raw_complexity = classification.get("complexity", "standard")
             complexity_map = {
                 "simple": "simple",
-                "standard": "moderate",  # Map standard -> moderate
+                "standard": "standard",  # Map standard -> moderate
                 "complex": "complex",
                 "specialized": "complex"  # Map specialized -> complex
             }
-            state.complexity = complexity_map.get(raw_complexity, "moderate")
+            state.complexity = complexity_map.get(raw_complexity, "standard")
             
             state.category = classification.get("category", "general")
             state.urgency = float(classification.get("urgency", 0.5))
@@ -301,7 +301,7 @@ Respond with ONLY the JSON object:"""
         except Exception as e:
             print(f"Routing failed: {e}")
             # Use moderate (not simple) to avoid quota issues on retries
-            state.complexity = "moderate"
+            state.complexity = "standard"
             state.category = "general"
         
         return state

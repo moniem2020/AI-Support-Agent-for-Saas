@@ -213,8 +213,8 @@ Provide a helpful response:"""
         # =============================================================
         
         # Select model based on complexity
-        model = self.models.get(state.complexity, self.models["moderate"])
-        state.model_used = MODEL_ROUTING.get(state.complexity, MODEL_ROUTING["moderate"])
+        model = self.models.get(state.complexity, self.models["standard"])
+        state.model_used = MODEL_ROUTING.get(state.complexity, MODEL_ROUTING["standard"])
         
         # Build prompt inputs
         context = self._build_context(state)
@@ -229,7 +229,7 @@ Provide a helpful response:"""
         
         try:
             # Generate response with automatic key rotation on quota errors
-            tier = state.complexity or "moderate"
+            tier = state.complexity or "standard"
             response = self._invoke_with_rotation(model, prompt, tier)
             state.response = response.content
             
