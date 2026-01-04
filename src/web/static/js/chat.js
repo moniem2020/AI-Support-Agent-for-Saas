@@ -282,8 +282,8 @@ function parseMarkdown(text) {
     for (let line of lines) {
         // Check for numbered list (1., 2., etc)
         const numberedMatch = line.match(/^(\d+)\.\s+(.+)$/);
-        // Check for bullet list (- or •)
-        const bulletMatch = line.match(/^[-•]\s+(.+)$/);
+        // Check for bullet list (-, *, or •)
+        const bulletMatch = line.match(/^[-*•]\s+(.+)$/);
 
         if (numberedMatch) {
             if (!inList || listType !== 'ol') {
