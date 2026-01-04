@@ -5,6 +5,7 @@
 const API_BASE = '/api/v1';
 let currentTicketId = null;
 let currentFilter = 'all';
+let pollDetailsInterval = null;
 
 /**
  * Initialize dashboard
@@ -160,131 +161,151 @@ function formatStatus(status) {
 }
 
 /**
- * Open ticket detail modal
+ * Open ticket detail modal with chat interface
  */
 async function openTicket(ticketId) {
     currentTicketId = ticketId;
+    if (pollDetailsInterval) clearInterval(pollDetailsInterval);
 
     try {
         const response = await fetch(`${API_BASE}/tickets/${ticketId}`);
         const ticket = await response.json();
 
-        // Render ticket details
-        const details = document.getElementById('ticketDetails');
+        renderTicketModalContent(ticket);
 
-        // Render Messages History if available
-        let historyHtml = '';
-        if (ticket.messages && ticket.messages.length > 0) {
-            historyHtml = `
-            <div class="ticket-detail">
-                <label>Conversation History</label>
-                <div class="chat-history" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;">
-                    ${ticket.messages.map(msg => `
-                        <div class="chat-message ${msg.role}" style="align-self: ${msg.role === 'user' ? 'flex-start' : 'flex-end'}; max-width: 80%;">
-                            <div class="msg-bubble" style="background: ${msg.role === 'user' ? 'var(--bg-secondary)' : 'var(--accent-primary)'}; color: ${msg.role === 'user' ? 'var(--text-primary)' : 'white'}; padding: 0.5rem 1rem; border-radius: 12px; font-size: 0.9rem;">
-                                <strong>${msg.role === 'user' ? 'User' : (msg.role === 'agent' ? 'Agent' : 'AI')}:</strong> ${escapeHtml(msg.content)}
-                            </div>
-                            <div class="msg-time" style="font-size: 0.7rem; color: var(--text-tertiary); margin-top: 0.2rem;">${new Date(msg.timestamp).toLocaleTimeString()}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>`;
-        } else {
-            // Fallback to legacy
-            historyHtml = `
-            <div class="ticket-detail">
-                <label>Full Query</label>
-                <div class="ticket-detail-value">${escapeHtml(ticket.query)}</div>
-            </div>
-            <div class="ticket-detail">
-                <label>AI Response</label>
-                <div class="ticket-detail-value">${escapeHtml(ticket.response)}</div>
-            </div>`;
-        }
-
-        details.innerHTML = `
-            <div class="ticket-detail">
-                <label>Ticket ID</label>
-                <div class="ticket-detail-value">#${ticket.id}</div>
-            </div>
-            <div class="ticket-detail">
-                <label>Subject</label>
-                <div class="ticket-detail-value"><strong>${escapeHtml(ticket.subject || ticket.query.substring(0, 60))}</strong></div>
-            </div>
-            <div class="ticket-detail">
-                <label>Category</label>
-                <div class="ticket-detail-value">${ticket.category || '-'}</div>
-            </div>
-            <div class="ticket-detail">
-                <label>Intent</label>
-                <div class="ticket-detail-value">${ticket.intent || '-'}</div>
-            </div>
-            <div class="ticket-detail">
-                <label>User</label>
-                <div class="ticket-detail-value">${ticket.user_id}</div>
-            </div>
-            
-            ${historyHtml}
-            
-            ${ticket.sources && ticket.sources.length > 0 ? `
-            <div class="ticket-detail">
-                <label>Knowledge Base Sources Used</label>
-                <div class="ticket-detail-value">
-                    ${ticket.sources.map(s => `<span class="source-tag">${escapeHtml(s)}</span>`).join(' ')}
-                </div>
-            </div>
-            ` : ''}
-            <div class="ticket-detail">
-                <label>Status</label>
-                <div class="ticket-detail-value">
-                    <span class="status-badge status-${ticket.status}">${formatStatus(ticket.status)}</span>
-                    ${ticket.needs_escalation ? '<span class="status-badge status-pending_review" style="margin-left: 0.5rem">Needs Escalation</span>' : ''}
-                    ${ticket.ai_resolved ? '<span class="status-badge status-ai_resolved" style="margin-left: 0.5rem">AI Handled</span>' : ''}
-                </div>
-            </div>
-            ${ticket.escalation_reason ? `
-            <div class="ticket-detail">
-                <label>Escalation Reason</label>
-                <div class="ticket-detail-value">${escapeHtml(ticket.escalation_reason)}</div>
-            </div>
-            ` : ''}
-            <div class="ticket-detail">
-                <label>Confidence</label>
-                <div class="ticket-detail-value">${(ticket.confidence * 100).toFixed(0)}%</div>
-            </div>
-            <div class="ticket-detail">
-                <label>Created</label>
-                <div class="ticket-detail-value">${new Date(ticket.created_at).toLocaleString()}</div>
-            </div>
-            ${ticket.assigned_to ? `
-            <div class="ticket-detail">
-                <label>Assigned To</label>
-                <div class="ticket-detail-value">${ticket.assigned_to}</div>
-            </div>
-            ` : ''}
-        `;
-
-        // Set current status in dropdown
-        document.getElementById('statusSelect').value = ticket.status;
-        document.getElementById('notesInput').value = ticket.notes || '';
-        if (document.getElementById('replyInput')) {
-            document.getElementById('replyInput').value = '';
-        }
-
-        // Show modal
         document.getElementById('ticketModal').classList.add('active');
 
-        // Scroll chat to bottom
-        const chatHistory = details.querySelector('.chat-history');
-        if (chatHistory) {
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-        }
+        // Start polling for chat updates
+        pollDetailsInterval = setInterval(() => refreshTicketDetails(ticketId), 3000);
 
-        // Refresh tickets (to update read status)
+        // Also refresh list to mark read
         loadTickets();
-
     } catch (error) {
         console.error('Failed to load ticket:', error);
+    }
+}
+
+/**
+ * Poll for ticket updates (chat history)
+ */
+async function refreshTicketDetails(ticketId) {
+    if (!ticketId || ticketId !== currentTicketId) return;
+    try {
+        const response = await fetch(`${API_BASE}/tickets/${ticketId}`);
+        const ticket = await response.json();
+        updateChatHistory(ticket.messages);
+    } catch (e) { }
+}
+
+/**
+ * Render the modal structure (Sidebar + Chat Area)
+ */
+function renderTicketModalContent(ticket) {
+    const details = document.getElementById('ticketDetails');
+    const subject = escapeHtml(ticket.subject || ticket.query.substring(0, 50));
+
+    details.innerHTML = `
+        <div class="modal-body-layout">
+            <div class="ticket-sidebar">
+                <div class="ticket-detail">
+                    <label>Ticket ID</label>
+                    <div class="ticket-detail-value">#${ticket.id}</div>
+                </div>
+                <div class="ticket-detail">
+                    <label>Subject</label>
+                    <div class="ticket-detail-value"><strong>${subject}</strong></div>
+                </div>
+                <div class="ticket-detail">
+                    <label>User</label>
+                    <div class="ticket-detail-value">${ticket.user_id}</div>
+                </div>
+                <div class="ticket-detail">
+                    <label>Category</label>
+                    <div class="ticket-detail-value">${ticket.category || '-'}</div>
+                </div>
+                
+                <hr style="border: 0; border-top: 1px solid var(--border-subtle); margin: 1rem 0;">
+                
+                <div class="ticket-detail">
+                    <label>Update Status</label>
+                    <select class="status-select" id="statusSelect">
+                        <option value="pending_review">Pending Review</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                
+                <div class="ticket-detail">
+                    <label>Internal Notes</label>
+                    <textarea class="notes-input" id="notesInput" placeholder="Internal notes..." rows="4">${ticket.notes || ''}</textarea>
+                </div>
+                
+                <button class="btn btn-secondary" style="width: 100%; margin-top: 1rem;" onclick="updateTicket()">Save Notes & Status</button>
+            </div>
+
+            <div class="chat-main-area">
+                <div class="chat-history-container" id="chatHistory">
+                    <!-- Chat messages injected here -->
+                </div>
+                
+                <div class="chat-input-area">
+                    <textarea class="notes-input" id="replyInput" style="height: 60px; min-height: 60px;" placeholder="Type a message... (Enter to send)"></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                         <span style="font-size: 0.8rem; color: var(--text-tertiary);">Shift+Enter for new line</span>
+                         <button class="btn btn-primary" onclick="sendReply()">Send Reply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Set status
+    document.getElementById('statusSelect').value = ticket.status;
+
+    // Initial Chat Render
+    updateChatHistory(ticket.messages);
+
+    // Setup Enter key to send
+    const replyInput = document.getElementById('replyInput');
+    replyInput.focus();
+    replyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendReply();
+        }
+    });
+}
+
+/**
+ * Update chat history DOM
+ */
+function updateChatHistory(messages) {
+    const container = document.getElementById('chatHistory');
+    if (!container) return;
+
+    // Preserve scroll if at bottom
+    const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+
+    if (!messages || messages.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); margin-top: 2rem;">No messages yet</div>';
+        return;
+    }
+
+    const html = messages.map(msg => `
+        <div class="chat-bubble ${msg.role === 'user' ? 'user' : (msg.role === 'agent' ? 'agent' : 'ai')}">
+            <div class="chat-meta">
+                <span>${msg.role === 'user' ? 'User' : (msg.role === 'agent' ? 'Agent' : 'AI')}</span>
+                <span>${new Date(msg.timestamp).toLocaleTimeString()}</span>
+            </div>
+            ${escapeHtml(msg.content)}
+        </div>
+    `).join('');
+
+    // Only update if content changed (simple check optional, but innerHTML is fast enough for text)
+    if (container.innerHTML !== html) {
+        container.innerHTML = html;
+        if (wasAtBottom) container.scrollTop = container.scrollHeight;
     }
 }
 
@@ -294,6 +315,10 @@ async function openTicket(ticketId) {
 function closeModal() {
     document.getElementById('ticketModal').classList.remove('active');
     currentTicketId = null;
+    if (pollDetailsInterval) {
+        clearInterval(pollDetailsInterval);
+        pollDetailsInterval = null;
+    }
 }
 
 /**
@@ -335,10 +360,14 @@ async function updateTicket() {
 async function sendReply() {
     if (!currentTicketId) return;
 
-    const message = document.getElementById('replyInput').value.trim();
+    const input = document.getElementById('replyInput');
+    const message = input.value.trim();
     if (!message) return;
 
     try {
+        // Optimistic UI update: clear input
+        input.value = '';
+
         const response = await fetch(`${API_BASE}/tickets/${currentTicketId}/reply`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -349,15 +378,17 @@ async function sendReply() {
         });
 
         if (response.ok) {
-            // Refresh ticket details to show new message
-            openTicket(currentTicketId);
+            // Fetch latest messages immediately
+            refreshTicketDetails(currentTicketId);
         } else {
             alert('Failed to send reply');
+            input.value = message; // Restore on failure
         }
 
-    } catch (e) {
-        console.error('Error sending reply:', e);
+    } catch (error) {
+        console.error('Failed to send reply:', error);
         alert('Failed to send reply');
+        input.value = message; // Restore on failure
     }
 }
 
