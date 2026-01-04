@@ -87,6 +87,55 @@ def chat():
         }), 500
 
 
+# Ticket API Proxies for CS Dashboard
+@app.route('/api/v1/tickets')
+def list_tickets():
+    """Proxy ticket list requests."""
+    try:
+        status = request.args.get('status')
+        url = f"{API_BASE_URL}/tickets"
+        if status:
+            url += f"?status={status}"
+        response = requests.get(url, timeout=10)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": str(e), "tickets": [], "stats": {}}), 500
+
+
+@app.route('/api/v1/tickets/notifications')
+def ticket_notifications():
+    """Proxy ticket notifications."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/tickets/notifications", timeout=5)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"unread_count": 0}), 500
+
+
+@app.route('/api/v1/tickets/<ticket_id>')
+def get_ticket(ticket_id):
+    """Proxy single ticket get."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/tickets/{ticket_id}", timeout=10)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/v1/tickets/<ticket_id>/status', methods=['PUT'])
+def update_ticket_status(ticket_id):
+    """Proxy ticket status update."""
+    try:
+        response = requests.put(
+            f"{API_BASE_URL}/tickets/{ticket_id}/status",
+            json=request.json,
+            timeout=10
+        )
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/health')
 def health():
     """Health check endpoint."""
