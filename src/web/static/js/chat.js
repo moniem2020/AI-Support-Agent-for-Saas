@@ -13,20 +13,42 @@ const sendButton = document.getElementById('sendButton');
 let isWaitingForResponse = false;
 let chatHistory = []; // Store messages for persistence
 
-// LocalStorage key for chat history
+// LocalStorage keys
 const CHAT_STORAGE_KEY = 'protaskflow_chat_history';
+const CHAT_TIMESTAMP_KEY = 'protaskflow_chat_timestamp';
+const CHAT_EXPIRY_HOURS = 24; // Auto-expire after 24 hours
 
 /**
- * Save chat history to localStorage
+ * Save chat history to localStorage with timestamp
  */
 function saveChat() {
     localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory));
+    localStorage.setItem(CHAT_TIMESTAMP_KEY, Date.now().toString());
 }
 
 /**
- * Load chat history from localStorage
+ * Check if chat has expired
+ */
+function isChatExpired() {
+    const savedTimestamp = localStorage.getItem(CHAT_TIMESTAMP_KEY);
+    if (!savedTimestamp) return false;
+
+    const elapsed = Date.now() - parseInt(savedTimestamp);
+    const expiryMs = CHAT_EXPIRY_HOURS * 60 * 60 * 1000;
+    return elapsed > expiryMs;
+}
+
+/**
+ * Load chat history from localStorage (if not expired)
  */
 function loadChat() {
+    // Check for expiry first
+    if (isChatExpired()) {
+        console.log('Chat history expired, starting fresh');
+        clearChat();
+        return;
+    }
+
     const saved = localStorage.getItem(CHAT_STORAGE_KEY);
     if (saved) {
         try {
@@ -42,14 +64,33 @@ function loadChat() {
 }
 
 /**
- * Clear chat history
+ * Clear chat history and start new conversation
  */
 function clearChat() {
     chatHistory = [];
     localStorage.removeItem(CHAT_STORAGE_KEY);
-    // Remove all messages except the welcome message
+    localStorage.removeItem(CHAT_TIMESTAMP_KEY);
+
+    // Remove all messages from DOM
     const messages = chatMessages.querySelectorAll('.message');
     messages.forEach(msg => msg.remove());
+
+    // Show welcome message again
+    addWelcomeMessage();
+}
+
+/**
+ * Add welcome message
+ */
+function addWelcomeMessage() {
+    const welcomeText = `Hi! I'm your AI support assistant. I can help you with:
+• Getting started with ProTaskFlow
+• Understanding features and billing
+• Troubleshooting issues
+• Integrations and setup
+
+How can I help you today?`;
+    addMessageToDOM(welcomeText, 'assistant', {}, 'Just now');
 }
 
 /**
@@ -76,6 +117,16 @@ function init() {
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('theme', next);
     });
+
+    // New Chat button
+    const newChatBtn = document.getElementById('newChatBtn');
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', () => {
+            if (confirm('Start a new conversation? Your current chat will be cleared.')) {
+                clearChat();
+            }
+        });
+    }
 
     // Load saved chat history
     loadChat();
