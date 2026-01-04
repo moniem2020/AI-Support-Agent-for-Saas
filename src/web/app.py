@@ -2,14 +2,16 @@
 Flask Web Application - Professional AI Support Chat Interface
 Styled like modern YC AI startups (Linear, Vercel, Anthropic)
 """
-from flask import Flask, render_template, request, jsonify, Response
-from functools import wraps
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 import requests
 import os
 
 app = Flask(__name__, 
             template_folder='templates',
             static_folder='static')
+
+# Secret key for sessions
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-change-in-prod")
 
 # API Backend URL
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000/api/v1")
@@ -19,41 +21,46 @@ CS_USERNAME = os.getenv("CS_USERNAME", "admin")
 CS_PASSWORD = os.getenv("CS_PASSWORD", "support123")
 
 
-def check_auth(username, password):
-    """Check if username/password match."""
-    return username == CS_USERNAME and password == CS_PASSWORD
-
-
-def authenticate():
-    """Send 401 response to trigger Basic Auth."""
-    return Response(
-        'Access denied. Please provide valid credentials.',
-        401,
-        {'WWW-Authenticate': 'Basic realm="CS Dashboard"'}
-    )
-
-
-def requires_auth(f):
-    """Decorator for routes requiring authentication."""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
-        return f(*args, **kwargs)
-    return decorated
-
-
 @app.route('/')
 def index():
     """Render the main chat interface."""
     return render_template('index.html')
 
 
+@app.route('/cs/login', methods=['GET', 'POST'])
+def cs_login():
+    """CS agent login page."""
+    if request.method == 'POST':
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
+        
+        if username == CS_USERNAME and password == CS_PASSWORD:
+            session['cs_authenticated'] = True
+            session['cs_username'] = username
+            return redirect(url_for('cs_dashboard'))
+        else:
+            return render_template('cs_login.html', error=True)
+    
+    # Already logged in?
+    if session.get('cs_authenticated'):
+        return redirect(url_for('cs_dashboard'))
+    
+    return render_template('cs_login.html')
+
+
+@app.route('/cs/logout')
+def cs_logout():
+    """Logout from CS dashboard."""
+    session.pop('cs_authenticated', None)
+    session.pop('cs_username', None)
+    return redirect(url_for('cs_login'))
+
+
 @app.route('/cs')
-@requires_auth
 def cs_dashboard():
     """Render the CS agent dashboard (requires authentication)."""
+    if not session.get('cs_authenticated'):
+        return redirect(url_for('cs_login'))
     return render_template('cs_dashboard.html')
 
 
