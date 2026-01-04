@@ -44,16 +44,12 @@ RULES:
 4. Use a friendly, professional tone
 5. Include specific steps if applicable
 6. DO NOT cite or mention sources in your response
-7. FORMAT YOUR RESPONSE using this exact structure:
-   **1. Section Title**
-   - First sub-step with dash prefix
-   - Second sub-step with dash prefix
-   
-   **2. Next Section**
-   - Sub-step here
-   - Another sub-step
-   
-   IMPORTANT: Every sub-item MUST start with "- " (dash space)
+7. FORMAT YOUR RESPONSE clearly:
+   - Use **bold** for section headers (e.g., **Free Plan**, **Pro Plan**)
+   - Use "- " (dash space) for bullet points
+   - Each feature/step should be on its own line with dash prefix
+   - Add blank line between sections
+   - DO NOT start with "1." unless listing sequential steps
 8. NEVER start with greetings like "Hello!", "Hi there!", "Hey!" - just answer the question directly
 
 Category: {category}
