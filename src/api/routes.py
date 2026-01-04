@@ -39,20 +39,38 @@ async def chat(request: ChatRequest) -> ChatResponse:
             ticket_id=request.ticket_id
         )
         
-        # Create ticket for tracking
+        # Create or update ticket for tracking
         from src.tickets.ticket_store import ticket_store
-        ticket_store.create(
-            user_id=request.user_id or "anonymous",
-            query=request.message,
-            response=result["response"],
-            ai_resolved=not result["escalated"],
-            needs_escalation=result["escalated"],
-            escalation_reason=result.get("escalation_reason", ""),
-            confidence=result["confidence"],
-            sources=result.get("sources", []),
-            category=result.get("category", ""),
-            intent=result.get("intent", "")
-        )
+        
+        # Use session_id if provided
+        if request.session_id:
+            ticket_store.create_or_update_by_session(
+                session_id=request.session_id,
+                user_id=request.user_id or "anonymous",
+                query=request.message,
+                response=result["response"],
+                ai_resolved=not result["escalated"],
+                needs_escalation=result["escalated"],
+                escalation_reason=result.get("escalation_reason", ""),
+                confidence=result["confidence"],
+                sources=result.get("sources", []),
+                category=result.get("category", ""),
+                intent=result.get("intent", "")
+            )
+        else:
+            # Fallback for requests without session_id (e.g. legacy)
+            ticket_store.create(
+                user_id=request.user_id or "anonymous",
+                query=request.message,
+                response=result["response"],
+                ai_resolved=not result["escalated"],
+                needs_escalation=result["escalated"],
+                escalation_reason=result.get("escalation_reason", ""),
+                confidence=result["confidence"],
+                sources=result.get("sources", []),
+                category=result.get("category", ""),
+                intent=result.get("intent", "")
+            )
         
         return ChatResponse(
             response=result["response"],

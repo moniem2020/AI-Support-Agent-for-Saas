@@ -24,6 +24,7 @@ class Ticket(BaseModel):
     """Customer support ticket."""
     id: str
     user_id: str
+    session_id: Optional[str] = None  # Chat session ID
     subject: str = ""  # Brief summary of what ticket is about
     category: str = ""  # E.g., billing, features, troubleshooting
     query: str
@@ -89,7 +90,8 @@ class TicketStore:
         confidence: float = 0.0,
         sources: List[str] = None,
         category: str = "",
-        intent: str = ""
+        intent: str = "",
+        session_id: str = None
     ) -> Ticket:
         """Create a new ticket."""
         ticket_id = str(uuid.uuid4())[:8]
@@ -106,6 +108,7 @@ class TicketStore:
         ticket = Ticket(
             id=ticket_id,
             user_id=user_id,
+            session_id=session_id,
             subject=subject,
             category=category,
             query=query,
@@ -124,6 +127,74 @@ class TicketStore:
         self._save()
         return ticket
     
+    def get_by_session(self, session_id: str) -> Optional[Ticket]:
+        """Get active ticket by session ID."""
+        if not session_id:
+            return None
+        
+        # Linear search - not efficient for millions but fine for thousands
+        # In prod, this would be a DB index lookup
+        for ticket in self.tickets.values():
+            if getattr(ticket, 'session_id', None) == session_id:
+                return ticket
+        return None
+
+    def create_or_update_by_session(
+        self,
+        session_id: str,
+        user_id: str,
+        query: str,
+        response: str,
+        ai_resolved: bool,
+        needs_escalation: bool,
+        escalation_reason: str = "",
+        confidence: float = 0.0,
+        sources: List[str] = None,
+        category: str = "",
+        intent: str = ""
+    ) -> Ticket:
+        """Create new ticket or update existing one for session."""
+        existing = self.get_by_session(session_id)
+        
+        if existing and existing.status != TicketStatus.CLOSED:
+            # Update existing ticket
+            existing.updated_at = datetime.now().isoformat()
+            
+            # Update status logic - if ANY message in session needs escalation, ticket needs escalation
+            if needs_escalation:
+                existing.needs_escalation = True
+                existing.escalation_reason = escalation_reason
+                existing.status = TicketStatus.PENDING_REVIEW
+                existing.ai_resolved = False
+            
+            # Append new interaction to query/response (simplified log)
+            existing.query += f"\n\n[User]: {query}"
+            existing.response += f"\n\n[AI]: {response}"
+            
+            # Update metadata if not set
+            if not existing.category and category:
+                existing.category = category
+            if not existing.subject and query:
+                existing.subject = query[:60] + "..." if len(query) > 60 else query
+            
+            self._save()
+            return existing
+        
+        # Create new ticket
+        return self.create(
+            user_id=user_id,
+            query=query,
+            response=response,
+            ai_resolved=ai_resolved,
+            needs_escalation=needs_escalation,
+            escalation_reason=escalation_reason,
+            confidence=confidence,
+            sources=sources,
+            category=category,
+            intent=intent,
+            session_id=session_id
+        )
+
     def get(self, ticket_id: str) -> Optional[Ticket]:
         """Get a ticket by ID."""
         return self.tickets.get(ticket_id)
