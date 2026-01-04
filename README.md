@@ -6,6 +6,9 @@ Enterprise-grade AI-powered customer support agent with RAG (Retrieval-Augmented
 
 - **Zero-LLM Simple Queries**: Greetings, farewells, and casual conversation are handled instantly without any API calls
 - **Smart Intent Classification**: Pattern-based detection for 100+ simple phrases (greetings, appreciation, small talk, etc.)
+- **CS Agent Dashboard**: Protected ticketing system at `/cs` for support agents to manage escalated tickets
+- **Human Escalation Detection**: Phrases like "talk to agent" or "speak to human" trigger immediate escalation
+- **Chat Session Management**: 24-hour auto-expiry with "New Chat" button for fresh conversations
 - **API Key Rotation**: 4-key pool with automatic failover for quota resilience
 - **Hybrid RAG Pipeline**: Combines dense (FAISS) and sparse (BM25) retrieval
 - **Professional Flask UI**: Beautiful dark/light theme with glassmorphism design
@@ -63,9 +66,15 @@ cp .env.example .env
 ### Environment Variables
 
 ```env
+# Google AI API Keys
 GOOGLE_API_KEY=your_main_api_key
 GOOGLE_API_KEY_FAST=your_fast_tier_key
 GOOGLE_API_KEYS_POOL=key1,key2,key3,key4
+
+# CS Dashboard Login (optional, defaults shown)
+CS_USERNAME=admin
+CS_PASSWORD=support123
+FLASK_SECRET_KEY=your-secret-key-change-in-prod
 ```
 
 ### Build Knowledge Base
@@ -87,7 +96,8 @@ python src/web/app.py
 ```
 
 Access the application:
-- **Flask UI**: http://localhost:5000
+- **Customer Chat**: http://localhost:5000
+- **CS Dashboard**: http://localhost:5000/cs (login required)
 - **API Docs**: http://localhost:8000/docs
 - **API Health**: http://localhost:8000/api/v1/health
 
