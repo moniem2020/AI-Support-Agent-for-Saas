@@ -39,6 +39,18 @@ async def chat(request: ChatRequest) -> ChatResponse:
             ticket_id=request.ticket_id
         )
         
+        # Create ticket for tracking
+        from src.tickets.ticket_store import ticket_store
+        ticket_store.create(
+            user_id=request.user_id or "anonymous",
+            query=request.message,
+            response=result["response"],
+            ai_resolved=not result["escalated"],
+            needs_escalation=result["escalated"],
+            escalation_reason=result.get("escalation_reason", ""),
+            confidence=result["confidence"]
+        )
+        
         return ChatResponse(
             response=result["response"],
             confidence=result["confidence"],
