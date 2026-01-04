@@ -239,9 +239,11 @@ class SupportAgentGraph:
         if state.confidence >= CONFIDENCE_THRESHOLD:
             return "good"
         
-        if state.retry_count < MAX_RETRIES and state.confidence > 0.3:
-            state.retry_count += 1
-            return "retry"
+        # REMOVED: Retry logic was causing infinite loops because routing functions
+        # can't persist state changes (retry_count += 1 didn't work)
+        # Low confidence responses go to escalate instead of infinite retry
+        if state.confidence > 0.3:
+            return "good"  # Accept moderate confidence responses
         
         return "escalate"
     
