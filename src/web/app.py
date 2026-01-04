@@ -20,6 +20,12 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/cs')
+def cs_dashboard():
+    """Render the CS agent dashboard."""
+    return render_template('cs_dashboard.html')
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """Proxy chat requests to the backend API."""
