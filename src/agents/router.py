@@ -313,13 +313,28 @@ Respond with ONLY the JSON object:"""
     
     def should_escalate_immediately(self, state: AgentState) -> bool:
         """Check if query should skip to escalation."""
+        query_lower = state.current_query.lower()
+        
         # Immediate escalation conditions
         if state.urgency > 0.9:
             return True
         if state.sentiment < 0.2:  # Very negative sentiment
             return True
-        if "urgent" in state.current_query.lower() or "emergency" in state.current_query.lower():
+        if "urgent" in query_lower or "emergency" in query_lower:
             return True
+        
+        # Explicit human agent requests - escalate immediately!
+        human_agent_phrases = [
+            "talk to agent", "speak to agent", "human agent",
+            "talk to human", "speak to human", "real person",
+            "talk to someone", "speak to someone", "customer service",
+            "cs agent", "speak with agent", "talk with agent",
+            "connect me to", "transfer me to", "escalate",
+            "supervisor", "manager", "representative"
+        ]
+        if any(phrase in query_lower for phrase in human_agent_phrases):
+            return True
+        
         return False
 
 
