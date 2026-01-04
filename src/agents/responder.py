@@ -289,7 +289,8 @@ Provide a helpful response:"""
         
         # Calculate final confidence (cap at 0.95)
         confidence = min(0.95, top_score + source_bonus + relevance_bonus)
-        return max(0.5, confidence)  # Minimum 0.5 to avoid unnecessary escalation
+        # Note: No minimum floor - allow low confidence for proper escalation
+        return confidence
 
 
 # Agent instance
