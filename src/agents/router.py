@@ -263,7 +263,23 @@ Respond with ONLY the JSON object:"""
         if any(query_lower.startswith(p) or p in query_lower for p in common_question_patterns):
             state.intent = "question"
             state.complexity = "standard"  # Moderate to trigger retrieval
-            state.category = "support"
+            
+            # Detect category based on keywords
+            if any(kw in query_lower for kw in ["price", "pricing", "cost", "plan", "subscription", "tier", "upgrade", "downgrade"]):
+                state.category = "pricing"
+            elif any(kw in query_lower for kw in ["bill", "billing", "invoice", "payment", "charge", "refund", "cancel"]):
+                state.category = "billing"
+            elif any(kw in query_lower for kw in ["feature", "integrate", "integration", "api", "webhook", "connect", "sync"]):
+                state.category = "features"
+            elif any(kw in query_lower for kw in ["error", "issue", "problem", "bug", "fix", "broken", "not working", "trouble", "help"]):
+                state.category = "troubleshooting"
+            elif any(kw in query_lower for kw in ["account", "login", "password", "profile", "settings", "security"]):
+                state.category = "account"
+            elif any(kw in query_lower for kw in ["start", "started", "begin", "setup", "install", "onboard"]):
+                state.category = "getting_started"
+            else:
+                state.category = "general"
+            
             state.urgency = 0.4
             state.sentiment = 0.5
             return state  # Skip LLM classification!
