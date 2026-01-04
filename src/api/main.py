@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 import time
 
 from src.api.routes import router
+from src.api.ticket_routes import router as ticket_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -54,6 +55,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include routes
 app.include_router(router, prefix="/api/v1", tags=["Support Agent"])
+app.include_router(ticket_router, prefix="/api/v1", tags=["Tickets"])
 
 
 # Root endpoint
