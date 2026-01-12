@@ -1,80 +1,75 @@
-# AI Support Agent
+<div align="center">
 
-Enterprise-grade AI-powered customer support agent with RAG (Retrieval-Augmented Generation), semantic caching, and multi-agent orchestration using LangGraph.
+# 🤖 AI Support Agent
 
-## 🚀 Key Features
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-00a393.svg)](https://fastapi.tiangolo.com)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-- **Zero-LLM Simple Queries**: Greetings, farewells, and casual conversation are handled instantly without any API calls
-- **Smart Intent Classification**: Pattern-based detection for 100+ simple phrases (greetings, appreciation, small talk, etc.)
-- **CS Agent Dashboard**: Protected ticketing system at `/cs` for support agents to manage escalated tickets
-- **Human Escalation Detection**: Phrases like "talk to agent" or "speak to human" trigger immediate escalation
-- **Chat Session Management**: 24-hour auto-expiry with "New Chat" button for fresh conversations
-- **API Key Rotation**: 4-key pool with automatic failover for quota resilience
-- **Hybrid RAG Pipeline**: Combines dense (FAISS) and sparse (BM25) retrieval
-- **Professional Flask UI**: Beautiful dark/light theme with glassmorphism design
-- **Multi-Agent Orchestration**: LangGraph-based workflow with specialized agents
+**Enterprise-grade AI-powered customer support system with RAG, real-time agent chat, and intelligent escalation.**
 
-## Architecture
+[Features](#-features) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
-```mermaid
-graph TB
-    User[User Query] --> Security[Security Check]
-    Security --> Route[Router Agent]
-    
-    Route -->|Simple Intent| DirectRespond[Hardcoded Response<br/>ZERO API Calls!]
-    Route -->|Urgent| Escalation[Escalation Agent]
-    Route -->|Product Question| Cache[Semantic Cache]
-    
-    Cache -->|Hit| Response[Return Response]
-    Cache -->|Miss| Retrieve[Hybrid RAG<br/>Dense + Sparse]
-    
-    Retrieve --> Responder[Responder Agent<br/>Key Rotation Pool]
-    Responder --> Quality[Quality Check]
-    
-    Quality -->|Pass| Response
-    Quality -->|Fail| Escalation
-    
-    DirectRespond --> Response
-    Escalation --> Response
-    
-    style DirectRespond fill:#22c55e
-    style Route fill:#6366f1
-    style Responder fill:#f59e0b
-```
+</div>
 
-## Quick Start
+---
+
+## ✨ Features
+
+### 🎯 Core Capabilities
+
+| Feature | Description |
+|---------|-------------|
+| **🤖 AI-Powered Responses** | Uses Google Gemini with RAG for context-aware answers |
+| **💬 Real-Time Agent Chat** | Two-way communication between CS agents and customers |
+| **📧 Email Notifications** | Automatic emails when agents reply or ticket status changes |
+| **🚨 Smart Escalation** | Auto-escalates when AI confidence is low or user requests human help |
+| **⚡ Zero-LLM Greetings** | Instant responses for greetings, farewells, and small talk (0 API calls) |
+| **🔄 API Key Rotation** | Automatic failover across 4+ API keys for quota resilience |
+
+### 🛠️ For Support Agents
+
+| Feature | Description |
+|---------|-------------|
+| **📊 CS Dashboard** | Protected admin panel at `/cs` for ticket management |
+| **💬 Live Chat Interface** | Jump into any conversation with full history |
+| **📝 Internal Notes** | Private notes visible only to agents |
+| **🔔 Escalation Alerts** | Instant visibility into tickets needing human attention |
+
+### 🔒 Enterprise-Ready
+
+- **Semantic Caching** - Reduces API costs by caching similar queries
+- **PII Detection** - Automatic detection and protection of sensitive data
+- **Hybrid RAG** - Combines dense (FAISS) and sparse (BM25) retrieval
+- **Session Management** - 24-hour auto-expiry with manual "New Chat" option
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.11+
-- Google AI API Keys (at least 1, recommended 4 for quota resilience)
+- Google AI API Key ([Get one free](https://aistudio.google.com/app/apikey))
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/moniem2020/ai-support-agent.git
-cd ai-support-agent
+git clone https://github.com/moniem2020/AI-Support-Agent-for-Saas.git
+cd AI-Support-Agent-for-Saas
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your API keys
-```
-
-### Environment Variables
-
-```env
-# Google AI API Keys
-GOOGLE_API_KEY=your_main_api_key
-GOOGLE_API_KEY_FAST=your_fast_tier_key
-GOOGLE_API_KEYS_POOL=key1,key2,key3,key4
-
-# CS Dashboard Login (optional, defaults shown)
-CS_USERNAME=admin
-CS_PASSWORD=support123
-FLASK_SECRET_KEY=your-secret-key-change-in-prod
+# Edit .env with your API keys (see Configuration below)
 ```
 
 ### Build Knowledge Base
@@ -85,175 +80,232 @@ python scripts/index_knowledge_base.py
 
 ### Run the Application
 
+Open two terminals:
+
 **Terminal 1: API Server**
 ```bash
 uvicorn src.api.main:app --reload
 ```
 
-**Terminal 2: Flask UI**
+**Terminal 2: Web UI**
 ```bash
 python src/web/app.py
 ```
 
-Access the application:
-- **Customer Chat**: http://localhost:5000
-- **CS Dashboard**: http://localhost:5000/cs (login required)
-- **API Docs**: http://localhost:8000/docs
-- **API Health**: http://localhost:8000/api/v1/health
+### Access Points
 
-## Query Processing Flow
+| URL | Description |
+|-----|-------------|
+| http://localhost:5001 | Customer Chat Interface |
+| http://localhost:5001/cs | CS Agent Dashboard (login required) |
+| http://localhost:8000/docs | API Documentation (Swagger) |
+| http://localhost:8000/api/v1/health | Health Check Endpoint |
 
-| Query Type | Example | LLM Called? | API Calls |
-|------------|---------|-------------|-----------|
-| Greeting | "hi", "hello", "hey" | ❌ NO | 0 |
-| Farewell | "bye", "thanks bye" | ❌ NO | 0 |
-| Appreciation | "thanks", "thank you" | ❌ NO | 0 |
-| Small Talk | "how are you" | ❌ NO | 0 |
-| Chitchat | "ok", "cool", "lol" | ❌ NO | 0 |
-| Product Question | "how do I setup?" | ✅ YES | 1-2 |
+---
 
-## Key Components
+## 🏗️ Architecture
 
-### 🧠 Router Agent (`src/agents/router.py`)
-- **Hybrid Classification**: Pattern-based for 140+ simple phrases, LLM for complex queries
-- **Intent Categories**: greeting, farewell, appreciation, small_talk, chitchat, question, complaint
-- **Product Keywords**: Detects billing, account, features, etc. for proper routing
-
-### 🔄 API Key Rotation (`src/agents/responder.py`)
-- **4-Key Pool**: Rotates through API keys on quota errors
-- **Automatic Failover**: Catches 429 errors and switches keys
-- **Tier-Based Routing**: All tiers can use the key pool
-
-### 🎨 Flask UI (`src/web/`)
-- **Dark/Light Themes**: Toggle with sun/moon button
-- **Modern Design**: Glassmorphism, Inter font, smooth animations
-- **Responsive**: Works on mobile and desktop
-
-### 📚 RAG Pipeline (`src/rag/`)
-- **Dense Retrieval**: FAISS + Google text-embedding-004
-- **Sparse Retrieval**: BM25 keyword matching
-- **Reranking**: Combines and reranks for relevance
-
-## Configuration
-
-Key settings in `src/config.py`:
-
-```python
-# Model Routing - ALL use gemini-2.5-flash for quota resilience
-LLM_TIER_FAST = "gemini-2.5-flash"
-LLM_TIER_1 = "gemini-2.5-flash"
-LLM_TIER_2 = "gemini-2.5-flash"
-
-# All tiers use key rotation pool
-API_KEY_ROUTING = {
-    "simple": "pool",
-    "moderate": "pool",
-    "complex": "pool",
-}
-
-# RAG Settings
-CHUNK_SIZE = 512
-DENSE_TOP_K = 10
-SPARSE_TOP_K = 10
-RERANK_TOP_K = 5
-
-# Quality Thresholds
-CONFIDENCE_THRESHOLD = 0.7
-ESCALATION_THRESHOLD = 0.5
+```mermaid
+graph TB
+    User[👤 Customer] --> Chat[💬 Chat Interface]
+    Chat --> API[🔌 FastAPI Backend]
+    
+    API --> Router{🧠 Router Agent}
+    
+    Router -->|Simple Query| Direct[⚡ Instant Response<br/>Zero API Calls]
+    Router -->|"Talk to human"| Escalate[🚨 Escalation]
+    Router -->|Product Question| Cache{📦 Semantic Cache}
+    
+    Cache -->|Hit| Response[✅ Response]
+    Cache -->|Miss| RAG[📚 Hybrid RAG]
+    
+    RAG --> Responder[🤖 Responder Agent<br/>Key Rotation Pool]
+    Responder --> Quality{✔️ Quality Check}
+    
+    Quality -->|Pass| Response
+    Quality -->|Low Confidence| Escalate
+    
+    Escalate --> Ticket[🎫 Create Ticket]
+    Ticket --> Email[📧 Email Notification]
+    Ticket --> Dashboard[👨‍💼 CS Dashboard]
+    
+    Dashboard --> Agent[💬 Agent Reply]
+    Agent --> Email
+    Agent --> User
+    
+    style Direct fill:#22c55e,color:#fff
+    style Escalate fill:#ef4444,color:#fff
+    style Dashboard fill:#6366f1,color:#fff
 ```
 
-## Project Structure
+---
+
+## ⚙️ Configuration
+
+Create a `.env` file in the project root:
+
+```env
+# ===================
+# Google AI API Keys
+# ===================
+GOOGLE_API_KEY=your_main_api_key
+GOOGLE_API_KEYS_POOL=key1,key2,key3,key4  # For rotation
+
+# ===================
+# CS Dashboard Auth
+# ===================
+CS_USERNAME=admin
+CS_PASSWORD=your_secure_password
+FLASK_SECRET_KEY=your-random-secret-key
+
+# ===================
+# Email Notifications (Optional)
+# ===================
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-gmail-app-password
+EMAIL_FROM_NAME=AI Support Agent
+EMAIL_ENABLED=true
+```
+
+> **📧 Gmail App Password**: For Gmail, use an [App Password](https://myaccount.google.com/apppasswords) instead of your regular password.
+
+---
+
+## 📖 Documentation
+
+### Query Processing
+
+| Query Type | Example | LLM Called? | Response Time |
+|------------|---------|-------------|---------------|
+| Greeting | "hi", "hello" | ❌ No | <10ms |
+| Farewell | "bye", "thanks" | ❌ No | <10ms |
+| Small Talk | "how are you" | ❌ No | <10ms |
+| Product Question | "how do I setup?" | ✅ Yes | 1-3s |
+| Escalation Request | "talk to human" | ❌ No | <100ms |
+
+### Key Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Router Agent | `src/agents/router.py` | Intent classification (140+ patterns) |
+| Responder Agent | `src/agents/responder.py` | Response generation with key rotation |
+| RAG Pipeline | `src/rag/` | Dense + Sparse retrieval |
+| Ticket Store | `src/tickets/ticket_store.py` | Ticket persistence |
+| Email Service | `src/notifications/email_service.py` | SMTP notifications |
+
+### API Endpoints
+
+```bash
+# Chat
+POST /api/v1/chat
+{
+  "message": "How do I get started?",
+  "user_id": "user123",
+  "session_id": "optional_session_id",
+  "user_email": "user@example.com"
+}
+
+# Tickets
+GET  /api/v1/tickets              # List all tickets
+GET  /api/v1/tickets/{id}         # Get ticket details
+POST /api/v1/tickets/{id}/reply   # Agent reply
+PUT  /api/v1/tickets/{id}/status  # Update status
+
+# Health
+GET /api/v1/health
+```
+
+---
+
+## 📁 Project Structure
 
 ```
 ai-support-agent/
 ├── src/
 │   ├── agents/           # Multi-agent orchestration
-│   │   ├── graph.py      # LangGraph workflow (routes simple queries directly)
-│   │   ├── router.py     # Intent classification (pattern + LLM hybrid)
-│   │   ├── responder.py  # Response generation (key rotation + hardcoded)
-│   │   └── escalation.py # Human handoff
+│   │   ├── graph.py      # LangGraph workflow
+│   │   ├── router.py     # Intent classification
+│   │   └── responder.py  # Response generation
 │   ├── api/              # FastAPI backend
-│   ├── cache/            # Semantic caching
-│   ├── rag/              # RAG pipeline (dense + sparse)
-│   ├── security/         # PII detection, injection defense
-│   ├── web/              # Flask UI
-│   │   ├── app.py        # Flask application
-│   │   ├── templates/    # HTML templates
-│   │   └── static/       # CSS/JS (dark/light themes)
-│   └── ui/               # Streamlit UI (legacy)
+│   │   ├── routes.py     # Chat endpoints
+│   │   └── ticket_routes.py  # Ticket endpoints
+│   ├── notifications/    # Email service
+│   ├── rag/              # RAG pipeline
+│   ├── tickets/          # Ticket management
+│   └── web/              # Flask UI
+│       ├── templates/    # HTML templates
+│       └── static/       # CSS/JS assets
 ├── data/
-│   ├── knowledge_base/   # Markdown knowledge base
-│   └── indexes/          # FAISS and BM25 indexes
-└── scripts/
-    ├── index_knowledge_base.py
-    ├── test_quota.py     # Test API key quota
-    └── list_models.py    # List available models
+│   ├── knowledge_base/   # Markdown docs
+│   └── indexes/          # FAISS/BM25 indexes
+└── scripts/              # Utility scripts
 ```
 
-## API Endpoints
+---
 
-### Chat
+## 🗺️ Roadmap
+
+- [x] AI-powered chat with RAG
+- [x] CS Agent Dashboard
+- [x] Two-way real-time chat
+- [x] Email notifications
+- [ ] Priority levels & SLA tracking
+- [ ] Analytics dashboard with charts
+- [ ] Canned responses for agents
+- [ ] Multi-language support
+
+---
+
+## 🤝 Contributing
+
+We love contributions! Here's how you can help:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Development Setup
+
 ```bash
-POST /api/v1/chat
-{
-  "message": "How do I get started?",
-  "user_id": "user123",
-  "ticket_id": "optional"
-}
+# Install dev dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+pytest
+
+# Format code
+black src/
 ```
 
-### Health Check
-```bash
-GET /api/v1/health
-```
+---
 
-### Metrics
-```bash
-GET /api/v1/metrics
-```
+## 📜 License
 
-## Quota Management Tips
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-1. **Use Multiple API Keys**: Add 4 keys to `GOOGLE_API_KEYS_POOL` for automatic rotation
-2. **Simple Queries Are Free**: Greetings/farewells use zero API calls
-3. **Monitor Key Usage**: Check logs for `[KEY ROTATION]` messages
-4. **Consider Paid Tier**: Free tier has 20 requests/day per model limit
+---
 
-## Development
+## 🙏 Acknowledgments
 
-### Adding Knowledge Base Content
-1. Add markdown files to `data/knowledge_base/`
-2. Rebuild indexes: `python scripts/index_knowledge_base.py`
-3. Restart the API server
-
-### Testing API Keys
-```bash
-python scripts/test_quota.py
-```
-
-## Contributing
-
-Contributions are very welcome! 🎉
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-MIT License
-
-## Built With
+Built with these amazing tools:
 
 - [LangGraph](https://github.com/langchain-ai/langgraph) - Multi-agent orchestration
 - [LangChain](https://github.com/langchain-ai/langchain) - RAG framework
-- [FastAPI](https://fastapi.tiangolo.com/) - API framework
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern API framework
 - [Flask](https://flask.palletsprojects.com/) - Web UI framework
 - [FAISS](https://github.com/facebookresearch/faiss) - Vector search
 - [Google Gemini](https://ai.google.dev/) - LLM and embeddings
 
 ---
 
-<p align="center">Made with ❤️ by MG</p>
+<div align="center">
+
+**⭐ Star this repo if you find it helpful!**
+
+Made with ❤️ by [MG](https://github.com/moniem2020)
+
+</div>
