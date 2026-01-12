@@ -20,7 +20,11 @@ const CHAT_STORAGE_KEY = 'protaskflow_chat_history';
 const CHAT_TIMESTAMP_KEY = 'protaskflow_chat_timestamp';
 const CHAT_SESSION_KEY = 'protaskflow_session_id';
 const TICKET_ID_KEY = 'protaskflow_ticket_id';
+const USER_EMAIL_KEY = 'protaskflow_user_email';
 const CHAT_EXPIRY_HOURS = 24; // Auto-expire after 24 hours
+
+// Get stored email if any
+let userEmail = localStorage.getItem(USER_EMAIL_KEY) || null;
 
 /**
  * Generate a unique session ID
@@ -193,7 +197,8 @@ async function sendMessage() {
                 message: message,
                 user_id: 'web_user',
                 session_id: sessionId,
-                ticket_id: null
+                ticket_id: null,
+                user_email: userEmail
             })
         });
 
@@ -219,6 +224,11 @@ async function sendMessage() {
                 confidence: data.confidence,
                 escalated: data.escalated
             });
+
+            // Prompt for email if escalated and no email stored
+            if (data.escalated && !userEmail) {
+                promptForEmail();
+            }
         }
 
     } catch (error) {
@@ -424,6 +434,45 @@ setInterval(async () => {
         // Silent fail
     }
 }, 5000);
+
+/**
+ * Prompt user for email when escalation occurs
+ */
+function promptForEmail() {
+    const modal = document.getElementById('emailModal');
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+/**
+ * Submit email from modal
+ */
+function submitEmail() {
+    const input = document.getElementById('emailInput');
+    const email = input.value.trim();
+
+    if (email && email.includes('@')) {
+        userEmail = email;
+        localStorage.setItem(USER_EMAIL_KEY, userEmail);
+        closeEmailModal();
+
+        // Update existing ticket with email (via next message send)
+        addMessage('Thanks! We\'ll notify you at ' + email + ' when our support team responds.', 'assistant');
+    } else {
+        input.style.borderColor = '#ff4444';
+    }
+}
+
+/**
+ * Close email modal
+ */
+function closeEmailModal() {
+    const modal = document.getElementById('emailModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', init);
