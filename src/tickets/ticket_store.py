@@ -46,6 +46,7 @@ class Ticket(BaseModel):
     assigned_to: Optional[str] = None
     read: bool = False
     notes: str = ""
+    user_email: Optional[str] = None  # For email notifications
     updated_at: Optional[str] = None
     
     # Conversation history
@@ -94,7 +95,8 @@ class TicketStore:
         sources: List[str] = None,
         category: str = "",
         intent: str = "",
-        session_id: str = None
+        session_id: str = None,
+        user_email: str = None
     ) -> Ticket:
         """Create a new ticket."""
         ticket_id = str(uuid.uuid4())[:8]
@@ -132,7 +134,8 @@ class TicketStore:
             sources=sources or [],
             intent=intent,
             status=status,
-            messages=messages
+            messages=messages,
+            user_email=user_email
         )
         
         self.tickets[ticket_id] = ticket
@@ -163,7 +166,8 @@ class TicketStore:
         confidence: float = 0.0,
         sources: List[str] = None,
         category: str = "",
-        intent: str = ""
+        intent: str = "",
+        user_email: str = None
     ) -> Ticket:
         """Create new ticket or update existing one for session."""
         existing = self.get_by_session(session_id)
@@ -217,7 +221,8 @@ class TicketStore:
             sources=sources,
             category=category,
             intent=intent,
-            session_id=session_id
+            session_id=session_id,
+            user_email=user_email
         )
 
     def add_message(

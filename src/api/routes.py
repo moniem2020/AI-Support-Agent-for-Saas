@@ -55,7 +55,8 @@ async def chat(request: ChatRequest) -> ChatResponse:
                 confidence=result["confidence"],
                 sources=result.get("sources", []),
                 category=result.get("category", ""),
-                intent=result.get("intent", "")
+                intent=result.get("intent", ""),
+                user_email=request.user_email
             )
         else:
             # Fallback for requests without session_id (e.g. legacy)
@@ -69,7 +70,8 @@ async def chat(request: ChatRequest) -> ChatResponse:
                 confidence=result["confidence"],
                 sources=result.get("sources", []),
                 category=result.get("category", ""),
-                intent=result.get("intent", "")
+                intent=result.get("intent", ""),
+                user_email=request.user_email
             )
         
         return ChatResponse(

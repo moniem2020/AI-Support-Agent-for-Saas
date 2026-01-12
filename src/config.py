@@ -71,3 +71,11 @@ MAX_RETRIES = 2
 CONFIDENCE_THRESHOLD = 0.7
 ESCALATION_THRESHOLD = 0.5
 
+# Email/SMTP Settings
+EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "true").lower() == "true"
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "AI Support Agent")
+

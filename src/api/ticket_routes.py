@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 from src.tickets.ticket_store import ticket_store, Ticket, TicketStatus
+from src.notifications.email_service import email_service
 
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
@@ -169,6 +170,15 @@ async def reply_ticket(ticket_id: str, request: ReplyRequest):
     if ticket.status == TicketStatus.PENDING_REVIEW:
         ticket_store.update_status(ticket_id, TicketStatus.IN_PROGRESS, "Agent replied")
         ticket = ticket_store.get(ticket_id)
+    
+    # Send email notification to user if email exists
+    if ticket.user_email:
+        email_service.send_agent_reply_notification(
+            to_email=ticket.user_email,
+            ticket_id=ticket.id,
+            ticket_subject=ticket.subject,
+            agent_message=request.message
+        )
         
     return TicketResponse(
         id=ticket.id,
@@ -206,12 +216,26 @@ async def update_ticket_status(ticket_id: str, request: UpdateStatusRequest):
     except ValueError:
         raise HTTPException(400, f"Invalid status: {request.status}")
     
+    # Get old status before updating
+    old_status = ticket.status.value
+    
     # Assign if provided
     if request.assigned_to:
         ticket_store.assign(ticket_id, request.assigned_to)
     
     # Update status
     ticket = ticket_store.update_status(ticket_id, status_enum, request.notes or "")
+    
+    # Send email notification for significant status changes
+    if ticket.user_email and old_status != status_enum.value:
+        if status_enum in [TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED, TicketStatus.CLOSED]:
+            email_service.send_status_change_notification(
+                to_email=ticket.user_email,
+                ticket_id=ticket.id,
+                ticket_subject=ticket.subject,
+                old_status=old_status,
+                new_status=status_enum.value
+            )
     
     return TicketResponse(
         id=ticket.id,

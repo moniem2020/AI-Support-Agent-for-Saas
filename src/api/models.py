@@ -14,6 +14,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = Field(None, description="Chat session ID for grouping messages")
     ticket_id: Optional[str] = Field(None, description="Optional ticket identifier")
     conversation_id: Optional[str] = Field(None, description="Optional conversation ID for context")
+    user_email: Optional[str] = Field(None, description="User email for notifications")
 
 
 class IndexRequest(BaseModel):
