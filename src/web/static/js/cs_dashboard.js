@@ -131,12 +131,14 @@ function renderTickets(tickets) {
         const unreadClass = !ticket.read && ticket.needs_escalation ? 'unread' : '';
         const subject = ticket.subject || ticket.query.substring(0, 50) + '...';
         const category = ticket.category || '-';
+        const priority = ticket.priority || 'normal';
 
         return `
             <tr class="${unreadClass}" onclick="openTicket('${ticket.id}')">
                 <td><strong>#${ticket.id}</strong></td>
                 <td class="query-preview">${escapeHtml(subject)}</td>
                 <td>${category}</td>
+                <td><span class="priority-badge priority-${priority}">${priority}</span></td>
                 <td><span class="status-badge status-${ticket.status}">${formatStatus(ticket.status)}</span></td>
                 <td>${(ticket.confidence * 100).toFixed(0)}%</td>
                 <td>${ticket.assigned_to || '-'}</td>

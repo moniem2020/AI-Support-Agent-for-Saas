@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
 
-from src.tickets.ticket_store import ticket_store, Ticket, TicketStatus
+from src.tickets.ticket_store import ticket_store, Ticket, TicketStatus, TicketPriority
 from src.notifications.email_service import email_service
 
 
@@ -29,6 +29,7 @@ class TicketResponse(BaseModel):
     confidence: float
     sources: List[str] = []
     status: str
+    priority: str = "normal"
     assigned_to: Optional[str]
     read: bool
     notes: str
@@ -98,6 +99,7 @@ async def list_tickets(
             confidence=t.confidence,
             sources=t.sources,
             status=t.status.value,
+            priority=t.priority.value,
             assigned_to=t.assigned_to,
             read=t.read,
             notes=t.notes,
@@ -144,6 +146,7 @@ async def get_ticket(ticket_id: str):
         confidence=ticket.confidence,
         sources=ticket.sources,
         status=ticket.status.value,
+        priority=ticket.priority.value,
         assigned_to=ticket.assigned_to,
         read=ticket.read,
         notes=ticket.notes,
@@ -196,6 +199,7 @@ async def reply_ticket(ticket_id: str, request: ReplyRequest):
         confidence=ticket.confidence,
         sources=ticket.sources,
         status=ticket.status.value,
+        priority=ticket.priority.value,
         assigned_to=ticket.assigned_to,
         read=ticket.read,
         notes=ticket.notes,
@@ -253,6 +257,7 @@ async def update_ticket_status(ticket_id: str, request: UpdateStatusRequest):
         confidence=ticket.confidence,
         sources=ticket.sources,
         status=ticket.status.value,
+        priority=ticket.priority.value,
         assigned_to=ticket.assigned_to,
         read=ticket.read,
         notes=ticket.notes,

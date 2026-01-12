@@ -20,6 +20,14 @@ class TicketStatus(str, Enum):
     CLOSED = "closed"                     # Ticket closed
 
 
+class TicketPriority(str, Enum):
+    """Ticket priority levels."""
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
 class Ticket(BaseModel):
     """Customer support ticket."""
     id: str
@@ -41,6 +49,7 @@ class Ticket(BaseModel):
     
     # Status tracking
     status: TicketStatus = TicketStatus.PENDING_REVIEW
+    priority: TicketPriority = TicketPriority.NORMAL
     
     # CS agent info
     assigned_to: Optional[str] = None
