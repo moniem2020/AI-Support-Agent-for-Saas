@@ -64,6 +64,14 @@ def cs_dashboard():
     return render_template('cs_dashboard.html')
 
 
+@app.route('/cs/analytics')
+def cs_analytics():
+    """Render the CS analytics dashboard."""
+    if not session.get('cs_authenticated'):
+        return redirect(url_for('cs_login'))
+    return render_template('analytics.html')
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """Proxy chat requests to the backend API."""

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics | AI Support Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0f0f14;
+            --bg-secondary: #1a1a24;
+            --bg-tertiary: #252532;
+            --text-primary: #f0f0f5;
+            --text-secondary: #a0a0b0;
+            --text-tertiary: #6b6b80;
+            --accent-primary: #6366f1;
+            --accent-green: #22c55e;
+            --accent-orange: #f97316;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .back-link {
+            color: var(--accent-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .metric-value.green {
+            color: var(--accent-green);
+        }
+
+        .metric-value.orange {
+            color: var(--accent-orange);
+        }
+
+        .metric-value.red {
+            color: var(--accent-red);
+        }
+
+        .metric-value.blue {
+            color: var(--accent-blue);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+            margin-top: 0.5rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .chart-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .chart-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-tertiary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>📊 Support Analytics</h1>
+        <a href="/cs" class="back-link">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <div id="loading" class="loading">Loading analytics...</div>
+
+    <div id="content" style="display: none;">
+        <div class="metrics-grid" id="metricsGrid">
+            <!-- Populated by JS -->
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Tickets by Status</h3>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Tickets by Priority</h3>
+                <div class="chart-container">
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Resolution Performance</h3>
+                <div class="chart-container">
+                    <canvas id="resolutionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>AI vs Human Resolution</h3>
+                <div class="chart-container">
+                    <canvas id="aiHumanChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/v1';
+        let statusChart, priorityChart, resolutionChart, aiHumanChart;
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE}/tickets`);
+                const data = await response.json();
+
+                const tickets = data.tickets;
+                const stats = data.stats;
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                renderMetrics(tickets, stats);
+                renderCharts(tickets, stats);
+
+            } catch (error) {
+                document.getElementById('loading').textContent = 'Failed to load analytics';
+                console.error(error);
+            }
+        }
+
+        function renderMetrics(tickets, stats) {
+            const total = tickets.length;
+            const aiResolved = tickets.filter(t => t.ai_resolved).length;
+            const escalated = tickets.filter(t => t.needs_escalation).length;
+            const resolved = stats.resolved || 0;
+
+            const aiRate = total > 0 ? ((aiResolved / total) * 100).toFixed(0) : 0;
+            const escalationRate = total > 0 ? ((escalated / total) * 100).toFixed(0) : 0;
+            const avgConfidence = total > 0 ? (tickets.reduce((sum, t) => sum + t.confidence, 0) / total * 100).toFixed(0) : 0;
+
+            document.getElementById('metricsGrid').innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-value blue">${total}</div>
+                    <div class="metric-label">Total Tickets</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value green">${aiRate}%</div>
+                    <div class="metric-label">AI Resolution Rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value orange">${escalationRate}%</div>
+                    <div class="metric-label">Escalation Rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${avgConfidence}%</div>
+                    <div class="metric-label">Avg AI Confidence</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value green">${resolved}</div>
+                    <div class="metric-label">Resolved Tickets</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value red">${stats.pending_review || 0}</div>
+                    <div class="metric-label">Pending Review</div>
+                </div>
+            `;
+        }
+
+        function renderCharts(tickets, stats) {
+            // Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['AI Resolved', 'Pending Review', 'In Progress', 'Resolved', 'Closed'],
+                    datasets: [{
+                        data: [
+                            stats.ai_resolved || 0,
+                            stats.pending_review || 0,
+                            stats.in_progress || 0,
+                            stats.resolved || 0,
+                            stats.closed || 0
+                        ],
+                        backgroundColor: ['#22c55e', '#f97316', '#3b82f6', '#a855f7', '#6b7280']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#a0a0b0' }
+                        }
+                    }
+                }
+            });
+
+            // Priority Chart
+            const priorityCounts = { urgent: 0, high: 0, normal: 0, low: 0 };
+            tickets.forEach(t => {
+                const p = t.priority || 'normal';
+                priorityCounts[p] = (priorityCounts[p] || 0) + 1;
+            });
+
+            const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+            priorityChart = new Chart(priorityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Urgent', 'High', 'Normal', 'Low'],
+                    datasets: [{
+                        label: 'Tickets',
+                        data: [priorityCounts.urgent, priorityCounts.high, priorityCounts.normal, priorityCounts.low],
+                        backgroundColor: ['#dc2626', '#ea580c', '#2563eb', '#6b7280']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#6b6b80' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#a0a0b0' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Resolution Chart (AI vs Escalated)
+            const resolutionCtx = document.getElementById('resolutionChart').getContext('2d');
+            const aiResolved = tickets.filter(t => t.ai_resolved && !t.needs_escalation).length;
+            const humanResolved = tickets.filter(t => !t.ai_resolved || t.needs_escalation).length;
+
+            resolutionChart = new Chart(resolutionCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['AI Handled', 'Human Assisted'],
+                    datasets: [{
+                        data: [aiResolved, humanResolved],
+                        backgroundColor: ['#22c55e', '#6366f1']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#a0a0b0' }
+                        }
+                    }
+                }
+            });
+
+            // AI vs Human Chart (bar comparison)
+            const aiHumanCtx = document.getElementById('aiHumanChart').getContext('2d');
+            aiHumanChart = new Chart(aiHumanCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['AI Resolved', 'Needs Human', 'Fully Resolved', 'Closed'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [
+                            stats.ai_resolved || 0,
+                            stats.pending_review || 0,
+                            stats.resolved || 0,
+                            stats.closed || 0
+                        ],
+                        backgroundColor: ['#22c55e', '#f97316', '#a855f7', '#6b7280']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { color: '#6b6b80' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y: {
+                            ticks: { color: '#a0a0b0' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', loadAnalytics);
+    </script>
+</body>
+
+</html>
